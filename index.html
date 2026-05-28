@@ -70,16 +70,25 @@
         
         <!-- 버전 표시 -->
         <div class="no-print absolute top-3 left-4 text-gray-400 text-sm font-semibold tracking-wider">
-            v1.3
+            v1.4
         </div>
 
         <!-- 컨트롤 버튼 영역 -->
         <div class="no-print absolute top-3 right-4 flex items-center gap-1.5 bg-gray-50 p-1.5 rounded-md border border-gray-200 shadow-sm">
-            <button onclick="clearAllData()" class="text-gray-600 hover:text-black hover:bg-gray-200 px-3 py-1.5 rounded text-sm font-medium transition-colors" title="모든 입력 내용 지우기">
-                🔄 초기화
-            </button>
+            
+            <!-- 부분 초기화 그룹 (v1.4 업데이트) -->
+            <div class="flex items-center text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded overflow-hidden">
+                <span class="px-2 py-1.5 text-gray-400 text-[11px] bg-gray-50 border-r border-gray-200">지우기</span>
+                <button onclick="clearAllData()" class="px-2.5 py-1.5 hover:bg-red-50 hover:text-red-600 transition-colors" title="모든 입력 내용 지우기">전체</button>
+                <div class="w-px h-4 bg-gray-200"></div>
+                <button onclick="clearPaymentData()" class="px-2.5 py-1.5 hover:bg-gray-100 transition-colors" title="표(지급내용)만 지우기">지급</button>
+                <div class="w-px h-4 bg-gray-200"></div>
+                <button onclick="clearAgentData()" class="px-2.5 py-1.5 hover:bg-gray-100 transition-colors" title="대리인 내용만 지우기">대리인</button>
+            </div>
+
             <div class="h-4 w-px bg-gray-300 mx-1"></div>
-            <label class="cursor-pointer text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center" title="이니셜 자동완성용 엑셀 업로드">
+            
+            <label class="cursor-pointer text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center" title="이니셜 자동완성용 엑셀 업로드 (브라우저 영구저장)">
                 📖 주소록 로드
                 <input type="file" id="excel-upload-address" class="hidden" accept=".xlsx, .xls">
             </label>
@@ -165,11 +174,12 @@
             <footer class="flex flex-col items-end gap-6 mt-16 pr-4 pb-8">
                 <div class="flex flex-col items-end relative">
                     <div class="flex items-center gap-3 text-lg font-medium" id="date-footer">
-                        <input type="text" id="date-year" class="w-16 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="202X"> <span class="pt-1">년</span>
-                        <input type="text" id="date-month" class="w-10 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="MM"> <span class="pt-1">월</span>
-                        <input type="text" id="date-day" class="w-10 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="DD"> <span class="pt-1">일</span>
+                        <input type="text" id="date-year" class="date-input w-16 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="202X"> <span class="pt-1">년</span>
+                        <input type="text" id="date-month" class="date-input w-10 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="MM"> <span class="pt-1">월</span>
+                        <input type="text" id="date-day" class="date-input w-10 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="DD"> <span class="pt-1">일</span>
                     </div>
-                    <button type="button" onclick="setTodayDate()" class="no-print absolute -top-6 right-0 text-[11px] bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded border border-gray-300 transition-colors">
+                    <!-- 날짜 토글 버튼 (v1.4 업데이트) -->
+                    <button type="button" id="date-toggle-btn" onclick="toggleDate()" class="no-print absolute -top-6 right-0 text-[11px] bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded border border-gray-300 transition-colors">
                         📅 오늘 날짜
                     </button>
                 </div>
@@ -223,8 +233,9 @@
         const amountInputs = document.querySelectorAll('.amount-input:not(#total-amount)');
         const totalAmountDisplay = document.getElementById('total-amount');
         const allInputs = document.querySelectorAll('input:not([type="file"])');
+        const dateInputs = document.querySelectorAll('.date-input');
 
-        // 2. 금액 포맷팅 및 단축키 로직 (v1.3 변경점)
+        // 2. 금액 포맷팅 및 단축키 로직
         const formatNumber = num => num ? parseInt(num, 10).toLocaleString('ko-KR') : '';
         const unformatNumber = str => str.toString().replace(/[^\d]/g, '');
 
@@ -238,37 +249,70 @@
         };
 
         amountInputs.forEach(input => {
-            // 일반 타이핑 이벤트
             input.addEventListener('input', function() {
                 let cleanValue = unformatNumber(this.value);
                 this.value = cleanValue === '' ? '' : formatNumber(cleanValue);
                 calculateTotal();
             });
 
-            // '+' 키 단축키 이벤트 (000 자동입력)
             input.addEventListener('keydown', function(e) {
                 if (e.key === '+' || e.key === 'Add' || e.keyCode === 107) {
-                    e.preventDefault(); // 기본 '+' 기호 입력 방지
+                    e.preventDefault(); 
                     let cleanValue = unformatNumber(this.value);
-                    if (cleanValue !== '') { // 빈칸이 아닐 때만 000 추가
+                    if (cleanValue !== '') { 
                         this.value = formatNumber(cleanValue + '000');
                         calculateTotal();
-                        saveData(); // 단축키 사용 후 자동 저장
+                        saveData(); 
                     }
                 }
             });
         });
 
-        // 3. 날짜 설정
-        window.setTodayDate = function() {
-            const today = new Date();
-            document.getElementById('date-year').value = today.getFullYear();
-            document.getElementById('date-month').value = String(today.getMonth() + 1).padStart(2, '0');
-            document.getElementById('date-day').value = String(today.getDate()).padStart(2, '0');
+        // 3. 날짜 상태 토글 로직 (v1.4 업데이트)
+        function updateDateToggleUI() {
+            const y = document.getElementById('date-year').value;
+            const m = document.getElementById('date-month').value;
+            const d = document.getElementById('date-day').value;
+            const btn = document.getElementById('date-toggle-btn');
+            
+            if (y || m || d) {
+                btn.innerHTML = '📅 날짜 제거';
+                btn.classList.add('bg-red-50', 'text-red-600', 'border-red-200');
+                btn.classList.remove('bg-gray-100', 'text-gray-600');
+            } else {
+                btn.innerHTML = '📅 오늘 날짜';
+                btn.classList.remove('bg-red-50', 'text-red-600', 'border-red-200');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            }
+        }
+
+        window.toggleDate = function() {
+            const y = document.getElementById('date-year').value;
+            const m = document.getElementById('date-month').value;
+            const d = document.getElementById('date-day').value;
+
+            if (y || m || d) {
+                // 비우기
+                document.getElementById('date-year').value = '';
+                document.getElementById('date-month').value = '';
+                document.getElementById('date-day').value = '';
+            } else {
+                // 채우기
+                const today = new Date();
+                document.getElementById('date-year').value = today.getFullYear();
+                document.getElementById('date-month').value = String(today.getMonth() + 1).padStart(2, '0');
+                document.getElementById('date-day').value = String(today.getDate()).padStart(2, '0');
+            }
+            updateDateToggleUI();
             saveData();
         };
 
-        // 4. 주소록 로드
+        // 수동으로 날짜 입력시 토글 버튼 UI 연동
+        dateInputs.forEach(input => {
+            input.addEventListener('input', updateDateToggleUI);
+        });
+
+        // 4. 주소록 로드 (v1.4 업데이트: LocalStorage 영구 보존)
         document.getElementById('excel-upload-address').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -285,7 +329,10 @@
                         bank: (row['은행'] || '').toString().trim(),
                         account: (row['계좌'] || '').toString().trim()
                     }));
-                    alert('주소록이 로드되었습니다.');
+                    
+                    // 로컬스토리지에 주소록 저장
+                    localStorage.setItem('addressBookDataV1_4', JSON.stringify(addressBookData));
+                    alert(`주소록(${addressBookData.length}건)이 브라우저에 저장되었습니다.\n새로고침해도 유지됩니다.`);
                 } catch (error) {
                     alert('주소록 엑셀 파일을 읽는 중 오류가 발생했습니다.');
                 }
@@ -311,7 +358,7 @@
             });
         });
 
-        // 6. 데이터 내보내기 (v1.3 변경점: 엑셀 숫자 포맷 명시적 적용)
+        // 6. 데이터 내보내기 
         window.exportToExcel = function() {
             const excelData = [
                 ['일괄처리(지급) 요청서', '', '', '', ''], 
@@ -363,12 +410,10 @@
                 { s: {r: 17, c: 3}, e: {r: 17, c: 4} }  
             ];
 
-            // 금액 열(E열 = 인덱스 4)에 대해 강제로 엑셀 숫자 서식(#,##0) 부여
-            // 행 3(엑셀 4행, 1번 순번)부터 행 13(합계 행)까지 순회
             for (let r = 3; r <= 13; r++) {
                 const cellRef = XLSX.utils.encode_cell({r: r, c: 4});
                 if (ws[cellRef] && ws[cellRef].t === 'n') {
-                    ws[cellRef].z = '#,##0'; // 천단위 콤마 서식 적용
+                    ws[cellRef].z = '#,##0'; 
                 }
             }
 
@@ -388,9 +433,7 @@
                 try {
                     const workbook = XLSX.read(evt.target.result, { type: 'binary' });
                     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    
                     const excelData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-                    
                     if(excelData.length < 10) throw new Error("양식이 일치하지 않습니다.");
 
                     clearAllData(false); 
@@ -423,18 +466,18 @@
                     }
 
                     calculateTotal();
+                    updateDateToggleUI();
                     saveData();
                     alert('내보낸 양식을 성공적으로 불러왔습니다.');
                 } catch (error) {
                     alert('파일을 읽을 수 없습니다. (지원되는 양식이 아닙니다.)');
-                    console.error(error);
                 }
                 e.target.value = ''; 
             };
             reader.readAsBinaryString(file);
         });
 
-        // 8. 자동 저장
+        // 8. 자동 저장 및 로드
         function saveData() {
             const data = {};
             allInputs.forEach(input => {
@@ -443,13 +486,14 @@
                     data[key] = input.value;
                 }
             });
-            localStorage.setItem('paymentFormDataV1_3', JSON.stringify(data));
+            localStorage.setItem('paymentFormDataV1_4', JSON.stringify(data));
         }
 
         function loadData() {
-            const saved = localStorage.getItem('paymentFormDataV1_3');
-            if (saved) {
-                const data = JSON.parse(saved);
+            // 폼 데이터 로드
+            const savedForm = localStorage.getItem('paymentFormDataV1_4');
+            if (savedForm) {
+                const data = JSON.parse(savedForm);
                 allInputs.forEach(input => {
                     if (input.id !== 'total-amount') {
                         const key = input.id || `${input.className.split(' ')[0]}-${input.dataset.index}`;
@@ -459,12 +503,19 @@
                     }
                 });
                 calculateTotal();
+                updateDateToggleUI();
+            }
+
+            // 주소록 데이터 로드
+            const savedAddressBook = localStorage.getItem('addressBookDataV1_4');
+            if (savedAddressBook) {
+                addressBookData = JSON.parse(savedAddressBook);
             }
         }
 
         allInputs.forEach(input => input.addEventListener('input', saveData));
 
-        // 9. 초기화
+        // 9. 초기화 함수들 (v1.4 업데이트)
         window.clearRow = function(index) {
             if(!confirm(`${index + 1}번 항목을 지우시겠습니까?`)) return;
             document.querySelector(`.bank-input[data-index="${index}"]`).value = '';
@@ -475,12 +526,32 @@
             saveData();
         };
 
+        window.clearPaymentData = function(askConfirm = true) {
+            if(askConfirm && !confirm('지급 내역(표 내용)만 모두 지우시겠습니까?')) return;
+            document.querySelectorAll('.bank-input, .account-input, .recipient-input, .amount-input').forEach(el => el.value = '');
+            calculateTotal();
+            saveData();
+        };
+
+        window.clearAgentData = function(askConfirm = true) {
+            if(askConfirm && !confirm('대리인 정보만 지우시겠습니까?')) return;
+            document.getElementById('agent-name').value = '';
+            document.getElementById('agent-ssn').value = '';
+            document.getElementById('agent-address').value = '';
+            document.getElementById('agent-relation').value = '';
+            saveData();
+        };
+
         window.clearAllData = function(askConfirm = true) {
-            if(askConfirm && !confirm('작성한 모든 내용을 초기화하시겠습니까?\n(불러온 주소록은 유지됩니다)')) return;
+            if(askConfirm && !confirm('작성한 폼 내용을 모두 초기화하시겠습니까?\n(불러온 주소록은 유지됩니다)')) return;
+            
+            // 파일 업로드, 합계를 제외한 모든 인풋 비우기
             allInputs.forEach(input => {
                 if (input.id !== 'total-amount') input.value = '';
             });
+            
             calculateTotal();
+            updateDateToggleUI();
             saveData();
         };
 
