@@ -84,7 +84,7 @@
     <div class="sticky-toolbar w-full flex justify-center py-3 px-4 shadow-sm no-print mb-6">
         <div class="w-full max-w-[850px] flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <span class="text-bank-red font-bold text-lg tracking-wider">v1.9</span>
+                <span class="text-bank-red font-bold text-lg tracking-wider">v1.10</span>
                 <div class="h-5 w-px bg-gray-300"></div>
                 <!-- 주소록 관리 패널 -->
                 <div class="flex items-center bg-gray-100 rounded-md border border-gray-200 px-2 py-1 gap-2">
@@ -688,8 +688,14 @@
                 XLSX.utils.book_append_sheet(wb, ws, `페이지_${pageIndex + 1}`);
             });
             
-            const firstPageData = getPageData(document.querySelector('.print-container'));
-            const fileDate = `${firstPageData.dateYear || '0000'}${firstPageData.dateMonth || '00'}${firstPageData.dateDay || '00'}`;
+            const now = new Date();
+            const yy = String(now.getFullYear()).slice(-2);
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mins = String(now.getMinutes()).padStart(2, '0');
+            const fileDate = `${yy}${mm}${dd}${hh}${mins}`;
+            
             XLSX.writeFile(wb, `다중지급요청서_${fileDate}.xlsx`);
         };
 
