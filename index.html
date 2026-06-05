@@ -46,6 +46,16 @@
             font-weight: 500;
         }
 
+        /* 툴바 상단 고정 */
+        .sticky-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid #e5e7eb;
+        }
+
         @media print {
             body { background-color: white; }
             .no-print { display: none !important; }
@@ -58,146 +68,179 @@
                 max-width: 100% !important;
                 width: 100% !important;
                 border: none !important;
+                break-after: page; /* 다중 페이지 출력 시 페이지 나눔 */
+            }
+            .print-container:last-child {
+                break-after: auto;
             }
             input:focus { background-color: transparent; }
             input { color: black !important; }
         }
     </style>
 </head>
-<body class="p-4 md:p-8 flex justify-center">
+<body class="flex flex-col items-center min-h-screen">
 
-    <div class="print-container w-full max-w-[850px] bg-white shadow-xl rounded-sm p-8 md:p-12 relative border border-gray-200">
-        
-        <!-- 버전 표시 -->
-        <div class="no-print absolute top-3 left-4 text-gray-400 text-sm font-semibold tracking-wider">
-            v1.7
-        </div>
-
-        <!-- 컨트롤 버튼 영역 -->
-        <div class="no-print absolute top-3 right-4 flex items-center gap-1.5 bg-gray-50 p-1.5 rounded-md border border-gray-200 shadow-sm">
-            
-            <!-- 부분 초기화 그룹 -->
-            <div class="flex items-center text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded overflow-hidden">
-                <span class="px-2 py-1.5 text-gray-400 text-[11px] bg-gray-50 border-r border-gray-200">지우기</span>
-                <button onclick="clearAllData()" class="px-2.5 py-1.5 hover:bg-red-50 hover:text-red-600 transition-colors" title="모든 입력 내용 지우기">전체</button>
-                <div class="w-px h-4 bg-gray-200"></div>
-                <button onclick="clearPaymentData()" class="px-2.5 py-1.5 hover:bg-gray-100 transition-colors" title="표(지급내용)만 지우기">지급</button>
-                <div class="w-px h-4 bg-gray-200"></div>
-                <button onclick="clearAgentData()" class="px-2.5 py-1.5 hover:bg-gray-100 transition-colors" title="대리인 내용만 지우기">대리인</button>
-            </div>
-
-            <div class="h-4 w-px bg-gray-300 mx-1"></div>
-            
-            <label class="cursor-pointer text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center" title="이니셜 자동완성용 엑셀 업로드 (브라우저 영구저장)">
-                📖 주소록 로드
-                <input type="file" id="excel-upload-address" class="hidden" accept=".xlsx, .xls">
-            </label>
-            <div class="h-4 w-px bg-gray-300 mx-1"></div>
-            <label class="cursor-pointer text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center" title="기존에 저장한 엑셀 파일 불러오기">
-                ⬆️ 불러오기
-                <input type="file" id="excel-upload-data" class="hidden" accept=".xlsx, .xls">
-            </label>
-            <button onclick="exportToExcel()" class="text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-3 py-1.5 rounded text-sm font-medium transition-colors" title="현재 표 내용을 엑셀로 저장">
-                ⬇️ 내보내기
-            </button>
-            <div class="h-4 w-px bg-gray-300 mx-1"></div>
-            <button onclick="window.print()" class="bg-bank-red hover:bg-red-600 text-white px-4 py-1.5 rounded text-sm font-medium transition-colors shadow-sm ml-1">
-                🖨️ 인쇄
-            </button>
-        </div>
-
-        <header class="flex justify-between items-end mb-8 mt-10">
-            <h1 class="text-3xl font-bold text-bank-red tracking-tight">일괄처리(지급) 요청서</h1>
-            <table class="border border-black text-sm text-center border-collapse">
-                <tr>
-                    <td rowspan="2" class="border border-black w-6 py-4 font-medium text-black" style="writing-mode: vertical-lr;">결재</td>
-                    <td class="border border-black w-20 py-1 font-medium text-black">담당</td>
-                    <td class="border border-black w-20 py-1 font-medium text-black">책임자</td>
-                </tr>
-                <tr>
-                    <td class="border border-black h-16"></td>
-                    <td class="border border-black h-16"></td>
-                </tr>
-            </table>
-        </header>
-
-        <main>
-            <table class="w-full border-collapse border-2 border-bank-red mb-6 text-sm">
-                <thead>
-                    <tr class="bg-bank-pink text-black font-medium border-b-2 border-bank-red">
-                        <th class="border border-bank-red py-3 w-[8%]">순번</th>
-                        <th class="border border-bank-red py-3 w-[18%]">입금은행</th>
-                        <th class="border border-bank-red py-3 w-[29%]">입금계좌번호</th>
-                        <th class="border border-bank-red py-3 w-[20%]">수취인명</th>
-                        <th class="border border-bank-red py-3 w-[25%]">거래금액(원)</th>
-                    </tr>
-                </thead>
-                <tbody id="transaction-tbody" class="text-center">
-                    <!-- JS 로 자동 생성 -->
-                </tbody>
-                <tfoot>
-                    <tr class="bg-bank-pink font-bold border-t-2 border-bank-red text-black">
-                        <td colspan="4" class="border border-bank-red py-3 text-center">합 계</td>
-                        <td class="border border-bank-red py-1 px-1">
-                            <!-- 합계란 기호를 특수문자 ￦로 교체 -->
-                            <div class="flex items-center w-full px-2">
-                                <span class="text-black font-bold text-lg mr-1">￦</span>
-                                <input type="text" id="total-amount" class="amount-input font-bold text-black bg-transparent w-full cursor-default text-lg flex-1" readonly value="0" placeholder="0">
-                            </div>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-
-            <table class="w-full border-collapse border-2 border-bank-red mb-12 text-sm">
-                <tbody id="agent-tbody">
-                    <tr>
-                        <th rowspan="2" class="border border-bank-red bg-bank-pink text-black font-medium w-[8%] py-4">대<br>리<br>인</th>
-                        <th class="border border-bank-red bg-bank-pink text-black font-medium w-[18%] py-3">성 명</th>
-                        <td class="border border-bank-red w-[29%] px-2">
-                            <input type="text" id="agent-name" placeholder="대리인 성명">
-                        </td>
-                        <th class="border border-bank-red bg-bank-pink text-black font-medium w-[20%] py-3">주민번호</th>
-                        <td class="border border-bank-red w-[25%] px-2">
-                            <input type="text" id="agent-ssn" placeholder="예: 000000-0000000">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th class="border border-bank-red bg-bank-pink text-black font-medium py-3">주소/연락처</th>
-                        <td class="border border-bank-red px-2">
-                            <input type="text" id="agent-address" placeholder="주소 및 전화번호">
-                        </td>
-                        <th class="border border-bank-red bg-bank-pink text-black font-medium py-3">본인과의관계</th>
-                        <td class="border border-bank-red px-2">
-                            <input type="text" id="agent-relation" placeholder="예: 직원, 가족 등">
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <footer class="flex flex-col items-end gap-6 mt-16 pr-4 pb-8">
-                <div class="flex flex-col items-end relative">
-                    <div class="flex items-center gap-3 text-lg font-medium" id="date-footer">
-                        <input type="text" id="date-year" class="date-input w-16 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="202X"> <span class="pt-1">년</span>
-                        <input type="text" id="date-month" class="date-input w-10 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="MM"> <span class="pt-1">월</span>
-                        <input type="text" id="date-day" class="date-input w-10 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="DD"> <span class="pt-1">일</span>
-                    </div>
-                    <button type="button" id="date-toggle-btn" onclick="toggleDate()" class="no-print absolute -top-6 right-0 text-[11px] bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded border border-gray-300 transition-colors">
-                        📅 오늘 날짜
+    <!-- 상단 고정 툴바 -->
+    <div class="sticky-toolbar w-full flex justify-center py-3 px-4 shadow-sm no-print mb-6">
+        <div class="w-full max-w-[850px] flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-bank-red font-bold text-lg tracking-wider">v1.9</span>
+                <div class="h-5 w-px bg-gray-300"></div>
+                <!-- 주소록 관리 패널 -->
+                <div class="flex items-center bg-gray-100 rounded-md border border-gray-200 px-2 py-1 gap-2">
+                    <span id="address-book-status" class="text-xs font-semibold text-gray-600 w-[70px] text-center">주소록 없음</span>
+                    <label class="cursor-pointer text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1 rounded text-xs font-medium transition-colors" title="새로운 주소록 엑셀 파일 가져오기">
+                        📁 새 파일
+                        <input type="file" id="excel-upload-address" class="hidden" accept=".xlsx, .xls">
+                    </label>
+                    <button onclick="clearAddressBook()" class="text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded text-xs font-medium transition-colors" title="주소록 연동 해제 및 비우기">
+                        ❌ 끄기
                     </button>
                 </div>
+            </div>
 
-                <div class="flex items-center gap-4 text-xl font-bold">
-                    <span>신청인</span>
-                    <div class="relative flex items-center">
-                        <input type="text" id="applicant-name" class="w-48 border-b-2 border-gray-400 text-center pr-10 focus:border-bank-red rounded-none font-medium p-2" placeholder="성명 또는 상호">
-                        <span class="absolute right-2 text-sm text-gray-500 font-normal no-print">(서명/인)</span>
-                        <span class="absolute right-2 text-sm text-black font-normal hidden print:block">(인)</span>
-                    </div>
+            <div class="flex items-center gap-1.5 bg-gray-50 p-1 rounded-md border border-gray-200">
+                <div class="flex items-center text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded overflow-hidden">
+                    <span class="px-2 py-1 text-gray-400 bg-gray-50 border-r border-gray-200">초기화</span>
+                    <button onclick="globalClearAll()" class="px-2 py-1 hover:bg-red-50 hover:text-red-600 transition-colors" title="모든 페이지 초기화">전체</button>
                 </div>
-            </footer>
-        </main>
+                <div class="h-4 w-px bg-gray-300 mx-1"></div>
+                <label class="cursor-pointer text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-2 py-1 rounded text-sm font-medium transition-colors flex items-center" title="기존 작성 내역 불러오기">
+                    ⬆️ 불러오기
+                    <input type="file" id="excel-upload-data" class="hidden" accept=".xlsx, .xls">
+                </label>
+                <button onclick="exportToExcel()" class="text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-2 py-1 rounded text-sm font-medium transition-colors" title="작성한 모든 페이지를 다중 시트 엑셀로 저장">
+                    ⬇️ 내보내기
+                </button>
+                <div class="h-4 w-px bg-gray-300 mx-1"></div>
+                <button onclick="window.print()" class="bg-bank-red hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors shadow-sm ml-1">
+                    🖨️ 인쇄
+                </button>
+            </div>
+        </div>
     </div>
+
+    <!-- 다중 페이지가 추가될 컨테이너 -->
+    <div id="pages-wrapper" class="w-full flex flex-col items-center gap-10 pb-8 px-4">
+        <!-- JS가 템플릿을 복제하여 여기에 삽입합니다. -->
+    </div>
+
+    <!-- 페이지 추가 버튼 -->
+    <div class="w-full max-w-[850px] px-4 pb-20 no-print flex justify-center">
+        <button onclick="addPage()" class="w-full border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400 font-bold py-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-lg">
+            <span class="text-2xl">+</span> 새 페이지 추가
+        </button>
+    </div>
+
+    <!-- 페이지 생성용 템플릿 (보이지 않음) -->
+    <template id="page-template">
+        <div class="print-container w-full max-w-[850px] bg-white shadow-xl rounded-sm p-8 md:p-12 relative border border-gray-200">
+            <!-- 개별 페이지 삭제 버튼 -->
+            <button type="button" class="delete-page-btn no-print absolute top-4 right-4 text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 px-2 py-1 rounded text-xs transition-colors" onclick="removePage(this)">
+                🗑️ 이 페이지 삭제
+            </button>
+
+            <!-- 개별 페이지 부분 초기화 및 대리인 복사/붙여넣기 (v1.9 변경점) -->
+            <div class="no-print absolute top-4 left-4 flex gap-1.5 items-center">
+                <button onclick="clearPageSection(this, 'payment')" class="text-[10px] text-gray-500 hover:text-black border border-gray-200 bg-gray-50 hover:bg-gray-200 px-2 py-1 rounded transition-colors">지급 비우기</button>
+                <button onclick="clearPageSection(this, 'agent')" class="text-[10px] text-gray-500 hover:text-black border border-gray-200 bg-gray-50 hover:bg-gray-200 px-2 py-1 rounded transition-colors">대리인 비우기</button>
+                <div class="w-px h-3 bg-gray-300 mx-0.5"></div>
+                <button onclick="copyAgentData(this)" class="text-[10px] text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded transition-colors shadow-sm" title="이 페이지의 대리인 정보를 복사합니다.">대리인 복사</button>
+                <button onclick="pasteAgentData(this)" class="text-[10px] text-emerald-600 hover:text-emerald-800 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded transition-colors shadow-sm" title="복사해둔 대리인 정보를 이 페이지에 붙여넣습니다.">붙여넣기</button>
+            </div>
+
+            <header class="flex justify-between items-end mb-8 mt-12">
+                <h1 class="text-3xl font-bold text-bank-red tracking-tight">일괄처리(지급) 요청서</h1>
+                <table class="border border-black text-sm text-center border-collapse">
+                    <tr>
+                        <td rowspan="2" class="border border-black w-6 py-4 font-medium text-black" style="writing-mode: vertical-lr;">결재</td>
+                        <td class="border border-black w-20 py-1 font-medium text-black">담당</td>
+                        <td class="border border-black w-20 py-1 font-medium text-black">책임자</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-black h-16"></td>
+                        <td class="border border-black h-16"></td>
+                    </tr>
+                </table>
+            </header>
+
+            <main>
+                <table class="w-full border-collapse border-2 border-bank-red mb-6 text-sm">
+                    <thead>
+                        <tr class="bg-bank-pink text-black font-medium border-b-2 border-bank-red">
+                            <th class="border border-bank-red py-3 w-[8%]">순번</th>
+                            <th class="border border-bank-red py-3 w-[18%]">입금은행</th>
+                            <th class="border border-bank-red py-3 w-[29%]">입금계좌번호</th>
+                            <th class="border border-bank-red py-3 w-[20%]">수취인명</th>
+                            <th class="border border-bank-red py-3 w-[25%]">거래금액(원)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="transaction-tbody text-center">
+                        <!-- JS 렌더링 영역 (10줄) -->
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-bank-pink font-bold border-t-2 border-bank-red text-black">
+                            <td colspan="4" class="border border-bank-red py-3 text-center">합 계</td>
+                            <td class="border border-bank-red py-1 px-1">
+                                <div class="flex items-center w-full px-2">
+                                    <span class="text-black font-bold text-lg mr-1">￦</span>
+                                    <input type="text" class="total-amount font-bold text-black bg-transparent w-full cursor-default text-lg flex-1" readonly value="0" placeholder="0">
+                                </div>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <table class="w-full border-collapse border-2 border-bank-red mb-12 text-sm">
+                    <tbody class="agent-tbody">
+                        <tr>
+                            <th rowspan="2" class="border border-bank-red bg-bank-pink text-black font-medium w-[8%] py-4">대<br>리<br>인</th>
+                            <th class="border border-bank-red bg-bank-pink text-black font-medium w-[18%] py-3">성 명</th>
+                            <td class="border border-bank-red w-[29%] px-2">
+                                <input type="text" class="agent-name" placeholder="대리인 성명">
+                            </td>
+                            <th class="border border-bank-red bg-bank-pink text-black font-medium w-[20%] py-3">주민번호</th>
+                            <td class="border border-bank-red w-[25%] px-2">
+                                <input type="text" class="agent-ssn" placeholder="예: 000000-0000000">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="border border-bank-red bg-bank-pink text-black font-medium py-3">주소/연락처</th>
+                            <td class="border border-bank-red px-2">
+                                <input type="text" class="agent-address" placeholder="주소 및 전화번호">
+                            </td>
+                            <th class="border border-bank-red bg-bank-pink text-black font-medium py-3">본인과의관계</th>
+                            <td class="border border-bank-red px-2">
+                                <input type="text" class="agent-relation" placeholder="예: 직원, 가족 등">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <footer class="flex flex-col items-end gap-6 mt-16 pr-4 pb-8">
+                    <div class="flex flex-col items-end relative">
+                        <div class="flex items-center gap-3 text-lg font-medium">
+                            <input type="text" class="date-year date-input w-16 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="202X"> <span class="pt-1">년</span>
+                            <input type="text" class="date-month date-input w-10 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="MM"> <span class="pt-1">월</span>
+                            <input type="text" class="date-day date-input w-10 text-center border-b-2 border-gray-300 focus:border-bank-red rounded-none p-1" placeholder="DD"> <span class="pt-1">일</span>
+                        </div>
+                        <button type="button" onclick="togglePageDate(this)" class="date-toggle-btn no-print absolute -top-6 right-0 text-[11px] bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded border border-gray-300 transition-colors">
+                            📅 오늘 날짜
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-4 text-xl font-bold">
+                        <span>신청인</span>
+                        <div class="relative flex items-center">
+                            <input type="text" class="applicant-name w-48 border-b-2 border-gray-400 text-center pr-10 focus:border-bank-red rounded-none font-medium p-2" placeholder="성명/상호">
+                            <span class="absolute right-2 text-sm text-gray-500 font-normal no-print">(서명/인)</span>
+                            <span class="absolute right-2 text-sm text-black font-normal hidden print:block">(인)</span>
+                        </div>
+                    </div>
+                </footer>
+            </main>
+        </div>
+    </template>
 
     <datalist id="bank-list">
         <option value="NH농협"></option><option value="카카오뱅크"></option><option value="KB국민"></option>
@@ -213,75 +256,139 @@
 
     <script>
         let addressBookData = [];
+        let copiedAgentData = null; // 대리인 정보 복사를 위한 임시 저장소
+        const pagesWrapper = document.getElementById('pages-wrapper');
+        const pageTemplate = document.getElementById('page-template');
 
-        // 1. 행 생성 (v1.7 변경점: 금액 칸 SVG 제거 및 특수문자 ￦ 로 복구)
-        const tbody = document.getElementById('transaction-tbody');
-        for (let i = 1; i <= 10; i++) {
-            const tr = document.createElement('tr');
-            if(i % 2 === 0) tr.classList.add('bg-gray-50'); 
-            
-            tr.innerHTML = `
-                <td class="border border-bank-red py-2 font-medium text-gray-600 relative group">
-                    ${i}
-                    <button type="button" title="이 행 비우기" class="no-print absolute top-1/2 right-1 -translate-y-1/2 text-[10px] bg-red-100 text-red-600 hover:bg-red-500 hover:text-white rounded w-5 h-5 flex items-center justify-center hidden group-hover:flex transition-colors shadow-sm" onclick="clearRow(${i-1})">✕</button>
-                </td>
-                <td class="border border-bank-red py-1 px-1"><input type="text" list="bank-list" class="bank-input" data-index="${i-1}" placeholder="은행명"></td>
-                <td class="border border-bank-red py-1 px-1"><input type="text" class="account-input" data-index="${i-1}" placeholder="'-' 포함 입력"></td>
-                <td class="border border-bank-red py-1 px-1"><input type="text" class="recipient-input" data-index="${i-1}" placeholder="예금주 (이니셜)"></td>
-                <td class="border border-bank-red py-1 px-1">
-                    <div class="flex items-center w-full px-1">
-                        <span class="text-gray-600 font-medium mr-1">￦</span>
-                        <input type="text" class="amount-input flex-1 p-0.5" data-index="${i-1}" placeholder="0" title="'+' 키를 누르면 000이 자동 입력됩니다.">
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        }
-
-        const amountInputs = document.querySelectorAll('.amount-input:not(#total-amount)');
-        const totalAmountDisplay = document.getElementById('total-amount');
-        const allInputs = document.querySelectorAll('input:not([type="file"])');
-        const dateInputs = document.querySelectorAll('.date-input');
-
-        // 2. 금액 포맷팅 및 단축키 로직
+        // --- 공통 유틸리티 ---
         const formatNumber = num => num ? parseInt(num, 10).toLocaleString('ko-KR') : '';
         const unformatNumber = str => str.toString().replace(/[^\d]/g, '');
 
-        const calculateTotal = () => {
+        // --- 1. 다중 페이지 관리 시스템 ---
+        function createTransactionRows(tbody) {
+            for (let i = 1; i <= 10; i++) {
+                const tr = document.createElement('tr');
+                if(i % 2 === 0) tr.classList.add('bg-gray-50'); 
+                tr.innerHTML = `
+                    <td class="border border-bank-red py-2 font-medium text-gray-600 relative group">
+                        ${i}
+                        <button type="button" title="이 행 비우기" class="clear-row-btn no-print absolute top-1/2 right-1 -translate-y-1/2 text-[10px] bg-red-100 text-red-600 hover:bg-red-500 hover:text-white rounded w-5 h-5 flex items-center justify-center hidden group-hover:flex transition-colors shadow-sm" data-row="${i-1}">✕</button>
+                    </td>
+                    <td class="border border-bank-red py-1 px-1"><input type="text" list="bank-list" class="bank-input" data-row="${i-1}" placeholder="은행명"></td>
+                    <td class="border border-bank-red py-1 px-1"><input type="text" class="account-input" data-row="${i-1}" placeholder="'-' 포함"></td>
+                    <td class="border border-bank-red py-1 px-1"><input type="text" class="recipient-input" data-row="${i-1}" placeholder="예금주 (이니셜)"></td>
+                    <td class="border border-bank-red py-1 px-1">
+                        <div class="flex items-center w-full px-1">
+                            <span class="text-gray-600 font-medium mr-1">￦</span>
+                            <input type="text" class="amount-input flex-1 p-0.5" data-row="${i-1}" placeholder="0" title="'+' 키를 누르면 000 자동 입력">
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function addPage(data = null) {
+            const clone = pageTemplate.content.cloneNode(true);
+            const container = clone.querySelector('.print-container');
+            createTransactionRows(container.querySelector('.transaction-tbody'));
+            
+            pagesWrapper.appendChild(clone);
+            
+            if (data) fillPageData(container, data);
+            
+            updateDeleteButtons();
+            return container;
+        }
+
+        function removePage(btnElement) {
+            if (document.querySelectorAll('.print-container').length <= 1) {
+                alert('최소 1개의 페이지는 존재해야 합니다.');
+                return;
+            }
+            if (confirm('이 페이지를 삭제하시겠습니까?')) {
+                btnElement.closest('.print-container').remove();
+                saveAllData();
+                updateDeleteButtons();
+            }
+        }
+
+        function updateDeleteButtons() {
+            const pages = document.querySelectorAll('.print-container');
+            pages.forEach((page, index) => {
+                const btn = page.querySelector('.delete-page-btn');
+                if (pages.length === 1) btn.style.display = 'none';
+                else btn.style.display = 'block';
+            });
+        }
+
+        // --- 2. 대리인 복사/붙여넣기 및 페이지별 로직 (v1.9 추가점) ---
+        window.copyAgentData = function(btn) {
+            const page = btn.closest('.print-container');
+            copiedAgentData = {
+                name: page.querySelector('.agent-name').value,
+                ssn: page.querySelector('.agent-ssn').value,
+                address: page.querySelector('.agent-address').value,
+                relation: page.querySelector('.agent-relation').value
+            };
+            
+            // 시각적 피드백
+            const originalText = btn.innerText;
+            btn.innerText = '복사 완료!';
+            btn.classList.replace('text-blue-600', 'text-white');
+            btn.classList.replace('bg-blue-50', 'bg-blue-500');
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.replace('text-white', 'text-blue-600');
+                btn.classList.replace('bg-blue-500', 'bg-blue-50');
+            }, 1500);
+        };
+
+        window.pasteAgentData = function(btn) {
+            if (!copiedAgentData) {
+                alert('먼저 대리인 정보를 복사해주세요.');
+                return;
+            }
+            const page = btn.closest('.print-container');
+            page.querySelector('.agent-name').value = copiedAgentData.name;
+            page.querySelector('.agent-ssn').value = copiedAgentData.ssn;
+            page.querySelector('.agent-address').value = copiedAgentData.address;
+            page.querySelector('.agent-relation').value = copiedAgentData.relation;
+            saveAllData();
+        };
+
+        function calculatePageTotal(pageElement) {
             let total = 0;
-            amountInputs.forEach(input => {
+            pageElement.querySelectorAll('.amount-input').forEach(input => {
                 const val = unformatNumber(input.value);
                 if (val) total += parseInt(val, 10);
             });
-            totalAmountDisplay.value = total === 0 ? '0' : formatNumber(total);
+            pageElement.querySelector('.total-amount').value = total === 0 ? '0' : formatNumber(total);
+        }
+
+        window.togglePageDate = function(btnElement) {
+            const page = btnElement.closest('.print-container');
+            const y = page.querySelector('.date-year');
+            const m = page.querySelector('.date-month');
+            const d = page.querySelector('.date-day');
+
+            if (y.value || m.value || d.value) {
+                y.value = ''; m.value = ''; d.value = '';
+            } else {
+                const today = new Date();
+                y.value = today.getFullYear();
+                m.value = String(today.getMonth() + 1).padStart(2, '0');
+                d.value = String(today.getDate()).padStart(2, '0');
+            }
+            updatePageDateUI(page);
+            saveAllData();
         };
 
-        amountInputs.forEach(input => {
-            input.addEventListener('input', function() {
-                let cleanValue = unformatNumber(this.value);
-                this.value = cleanValue === '' ? '' : formatNumber(cleanValue);
-                calculateTotal();
-            });
-
-            input.addEventListener('keydown', function(e) {
-                if (e.key === '+' || e.key === 'Add' || e.keyCode === 107) {
-                    e.preventDefault(); 
-                    let cleanValue = unformatNumber(this.value);
-                    if (cleanValue !== '') { 
-                        this.value = formatNumber(cleanValue + '000');
-                        calculateTotal();
-                        saveData(); 
-                    }
-                }
-            });
-        });
-
-        // 3. 날짜 상태 토글 로직
-        function updateDateToggleUI() {
-            const y = document.getElementById('date-year').value;
-            const m = document.getElementById('date-month').value;
-            const d = document.getElementById('date-day').value;
-            const btn = document.getElementById('date-toggle-btn');
+        function updatePageDateUI(pageElement) {
+            const y = pageElement.querySelector('.date-year').value;
+            const m = pageElement.querySelector('.date-month').value;
+            const d = pageElement.querySelector('.date-day').value;
+            const btn = pageElement.querySelector('.date-toggle-btn');
             
             if (y || m || d) {
                 btn.innerHTML = '📅 날짜 제거';
@@ -294,30 +401,79 @@
             }
         }
 
-        window.toggleDate = function() {
-            const y = document.getElementById('date-year').value;
-            const m = document.getElementById('date-month').value;
-            const d = document.getElementById('date-day').value;
-
-            if (y || m || d) {
-                document.getElementById('date-year').value = '';
-                document.getElementById('date-month').value = '';
-                document.getElementById('date-day').value = '';
-            } else {
-                const today = new Date();
-                document.getElementById('date-year').value = today.getFullYear();
-                document.getElementById('date-month').value = String(today.getMonth() + 1).padStart(2, '0');
-                document.getElementById('date-day').value = String(today.getDate()).padStart(2, '0');
+        // --- 3. 이벤트 위임 (통합 리스너) ---
+        pagesWrapper.addEventListener('input', function(e) {
+            const page = e.target.closest('.print-container');
+            
+            if (e.target.classList.contains('amount-input')) {
+                let cleanValue = unformatNumber(e.target.value);
+                e.target.value = cleanValue === '' ? '' : formatNumber(cleanValue);
+                calculatePageTotal(page);
             }
-            updateDateToggleUI();
-            saveData();
-        };
+            
+            // 이니셜 주소록 자동완성 감지 (v1.9 변경점: 대소문자 구분 없음)
+            if (e.target.classList.contains('recipient-input')) {
+                const val = e.target.value.trim();
+                if (val && addressBookData.length > 0) {
+                    const valLower = val.toLowerCase(); // 입력값을 소문자로 변환
+                    const match = addressBookData.find(d => 
+                        d.name === val || d.initial.toLowerCase() === valLower // 등록된 이니셜도 소문자로 변환 후 비교
+                    );
+                    
+                    if (match) {
+                        const tr = e.target.closest('tr');
+                        e.target.value = match.name;
+                        if(match.bank) tr.querySelector('.bank-input').value = match.bank;
+                        if(match.account) tr.querySelector('.account-input').value = match.account;
+                    }
+                }
+            }
 
-        dateInputs.forEach(input => {
-            input.addEventListener('input', updateDateToggleUI);
+            if (e.target.classList.contains('date-input')) {
+                updatePageDateUI(page);
+            }
+
+            saveAllData(); 
         });
 
-        // 4. 주소록 로드
+        pagesWrapper.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('amount-input') && (e.key === '+' || e.key === 'Add' || e.keyCode === 107)) {
+                e.preventDefault(); 
+                let cleanValue = unformatNumber(e.target.value);
+                if (cleanValue !== '') { 
+                    e.target.value = formatNumber(cleanValue + '000');
+                    const page = e.target.closest('.print-container');
+                    calculatePageTotal(page);
+                    saveAllData(); 
+                }
+            }
+        });
+
+        pagesWrapper.addEventListener('click', function(e) {
+            if (e.target.classList.contains('clear-row-btn')) {
+                const tr = e.target.closest('tr');
+                const page = e.target.closest('.print-container');
+                tr.querySelector('.bank-input').value = '';
+                tr.querySelector('.account-input').value = '';
+                tr.querySelector('.recipient-input').value = '';
+                tr.querySelector('.amount-input').value = '';
+                calculatePageTotal(page);
+                saveAllData();
+            }
+        });
+
+        // --- 4. 주소록 관리 ---
+        function updateAddressBookStatus() {
+            const statusEl = document.getElementById('address-book-status');
+            if (addressBookData.length > 0) {
+                statusEl.textContent = `${addressBookData.length}건 적용중`;
+                statusEl.classList.replace('text-gray-600', 'text-blue-600');
+            } else {
+                statusEl.textContent = '주소록 없음';
+                statusEl.classList.replace('text-blue-600', 'text-gray-600');
+            }
+        }
+
         document.getElementById('excel-upload-address').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -335,8 +491,9 @@
                         account: (row['계좌'] || '').toString().trim()
                     }));
                     
-                    localStorage.setItem('addressBookDataV1_7', JSON.stringify(addressBookData));
-                    alert(`주소록(${addressBookData.length}건)이 브라우저에 저장되었습니다.\n새로고침해도 유지됩니다.`);
+                    localStorage.setItem('addressBookDataV1_9', JSON.stringify(addressBookData));
+                    updateAddressBookStatus();
+                    alert(`새 주소록(${addressBookData.length}건)이 적용 및 저장되었습니다.`);
                 } catch (error) {
                     alert('주소록 엑셀 파일을 읽는 중 오류가 발생했습니다.');
                 }
@@ -345,90 +502,197 @@
             reader.readAsBinaryString(file);
         });
 
-        // 5. 자동완성
-        document.querySelectorAll('.recipient-input').forEach(input => {
-            input.addEventListener('input', function(e) {
-                const val = e.target.value.trim();
-                if (!val || addressBookData.length === 0) return;
-                
-                const match = addressBookData.find(d => d.name === val || d.initial === val);
-                if (match) {
-                    const tr = e.target.closest('tr');
-                    e.target.value = match.name;
-                    if(match.bank) tr.querySelector('.bank-input').value = match.bank;
-                    if(match.account) tr.querySelector('.account-input').value = match.account;
-                    saveData();
-                }
-            });
-        });
-
-        // 6. 데이터 내보내기 
-        window.exportToExcel = function() {
-            const excelData = [
-                ['일괄처리(지급) 요청서', '', '', '', ''], 
-                [''], 
-                ['순번', '입금은행', '입금계좌번호', '수취인명', '거래금액(원)'] 
-            ];
-
-            for (let i = 0; i < 10; i++) {
-                const bank = document.querySelector(`.bank-input[data-index="${i}"]`).value;
-                const account = document.querySelector(`.account-input[data-index="${i}"]`).value;
-                const recipient = document.querySelector(`.recipient-input[data-index="${i}"]`).value;
-                const amountStr = document.querySelector(`.amount-input[data-index="${i}"]`).value;
-                
-                excelData.push([
-                    i + 1,
-                    bank,
-                    account,
-                    recipient,
-                    amountStr ? Number(unformatNumber(amountStr)) : null
-                ]);
+        window.clearAddressBook = function() {
+            if(addressBookData.length === 0) {
+                alert('이미 비어있습니다.'); return;
             }
-
-            const totalStr = document.getElementById('total-amount').value;
-            excelData.push(['합계', '', '', '', totalStr ? Number(unformatNumber(totalStr)) : 0]);
-            
-            excelData.push(['']); 
-            excelData.push(['[ 대리인 기재사항 ]', '', '', '', '']); 
-            excelData.push([
-                '성 명', document.getElementById('agent-name').value, 
-                '주민번호', document.getElementById('agent-ssn').value, ''
-            ]);
-            excelData.push([
-                '주소/연락처', document.getElementById('agent-address').value, 
-                '본인과의관계', document.getElementById('agent-relation').value, ''
-            ]);
-
-            excelData.push(['']); 
-            const dateStr = `${document.getElementById('date-year').value}년 ${document.getElementById('date-month').value}월 ${document.getElementById('date-day').value}일`;
-            excelData.push(['신청일', dateStr, '', '신청인', document.getElementById('applicant-name').value]); 
-
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
-
-            ws['!cols'] = [{wch: 10}, {wch: 15}, {wch: 25}, {wch: 20}, {wch: 15}];
-            ws['!merges'] = [
-                { s: {r: 0, c: 0}, e: {r: 0, c: 4} }, 
-                { s: {r: 13, c: 0}, e: {r: 13, c: 3} }, 
-                { s: {r: 15, c: 0}, e: {r: 15, c: 4} }, 
-                { s: {r: 16, c: 3}, e: {r: 16, c: 4} }, 
-                { s: {r: 17, c: 3}, e: {r: 17, c: 4} }  
-            ];
-
-            for (let r = 3; r <= 13; r++) {
-                const cellRef = XLSX.utils.encode_cell({r: r, c: 4});
-                if (ws[cellRef] && ws[cellRef].t === 'n') {
-                    ws[cellRef].z = '₩#,##0'; 
-                }
+            if(confirm('주소록 연동을 해제하고 브라우저 저장소에서 지우시겠습니까?\n(수기로만 입력하게 됩니다)')) {
+                addressBookData = [];
+                localStorage.removeItem('addressBookDataV1_9');
+                updateAddressBookStatus();
             }
-
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "지급요청서_양식");
-            
-            const fileDate = `${document.getElementById('date-year').value || '0000'}${document.getElementById('date-month').value || '00'}${document.getElementById('date-day').value || '00'}`;
-            XLSX.writeFile(wb, `지급요청서_${fileDate}.xlsx`);
         };
 
-        // 7. 데이터 불러오기
+        // --- 5. 데이터 저장 / 로드 / 직렬화 ---
+        function getPageData(pageElement) {
+            const data = { transactions: [] };
+            for(let i=0; i<10; i++) {
+                data.transactions.push({
+                    bank: pageElement.querySelector(`.bank-input[data-row="${i}"]`).value,
+                    account: pageElement.querySelector(`.account-input[data-row="${i}"]`).value,
+                    recipient: pageElement.querySelector(`.recipient-input[data-row="${i}"]`).value,
+                    amount: pageElement.querySelector(`.amount-input[data-row="${i}"]`).value
+                });
+            }
+            data.agentName = pageElement.querySelector('.agent-name').value;
+            data.agentSsn = pageElement.querySelector('.agent-ssn').value;
+            data.agentAddress = pageElement.querySelector('.agent-address').value;
+            data.agentRelation = pageElement.querySelector('.agent-relation').value;
+            data.dateYear = pageElement.querySelector('.date-year').value;
+            data.dateMonth = pageElement.querySelector('.date-month').value;
+            data.dateDay = pageElement.querySelector('.date-day').value;
+            data.applicantName = pageElement.querySelector('.applicant-name').value;
+            return data;
+        }
+
+        function fillPageData(pageElement, data) {
+            if(!data) return;
+            for(let i=0; i<10; i++) {
+                if(data.transactions[i]) {
+                    pageElement.querySelector(`.bank-input[data-row="${i}"]`).value = data.transactions[i].bank || '';
+                    pageElement.querySelector(`.account-input[data-row="${i}"]`).value = data.transactions[i].account || '';
+                    pageElement.querySelector(`.recipient-input[data-row="${i}"]`).value = data.transactions[i].recipient || '';
+                    pageElement.querySelector(`.amount-input[data-row="${i}"]`).value = data.transactions[i].amount || '';
+                }
+            }
+            pageElement.querySelector('.agent-name').value = data.agentName || '';
+            pageElement.querySelector('.agent-ssn').value = data.agentSsn || '';
+            pageElement.querySelector('.agent-address').value = data.agentAddress || '';
+            pageElement.querySelector('.agent-relation').value = data.agentRelation || '';
+            pageElement.querySelector('.date-year').value = data.dateYear || '';
+            pageElement.querySelector('.date-month').value = data.dateMonth || '';
+            pageElement.querySelector('.date-day').value = data.dateDay || '';
+            pageElement.querySelector('.applicant-name').value = data.applicantName || '';
+            
+            calculatePageTotal(pageElement);
+            updatePageDateUI(pageElement);
+        }
+
+        function saveAllData() {
+            const pages = Array.from(document.querySelectorAll('.print-container')).map(getPageData);
+            localStorage.setItem('paymentFormDataV1_9', JSON.stringify(pages));
+        }
+
+        function loadInitialData() {
+            // 하위 버전 호환 포함 주소록 로드
+            const savedAddressBook = localStorage.getItem('addressBookDataV1_9') || localStorage.getItem('addressBookDataV1_8') || localStorage.getItem('addressBookDataV1_7');
+            if (savedAddressBook) {
+                addressBookData = JSON.parse(savedAddressBook);
+                updateAddressBookStatus();
+            }
+
+            // 양식 로드
+            let savedPagesStr = localStorage.getItem('paymentFormDataV1_9') || localStorage.getItem('paymentFormDataV1_8');
+            let pagesData = null;
+            
+            if (savedPagesStr) {
+                pagesData = JSON.parse(savedPagesStr);
+            } else {
+                // 더 구버전 (v1.7 이하 단일페이지) 데이터 마이그레이션
+                const oldDataStr = localStorage.getItem('paymentFormDataV1_7') || localStorage.getItem('paymentFormDataV1_6');
+                if (oldDataStr) {
+                    try {
+                        const oldObj = JSON.parse(oldDataStr);
+                        const newData = { transactions: [] };
+                        for(let i=0; i<10; i++) {
+                            newData.transactions.push({
+                                bank: oldObj[`bank-input-${i}`] || '',
+                                account: oldObj[`account-input-${i}`] || '',
+                                recipient: oldObj[`recipient-input-${i}`] || '',
+                                amount: oldObj[`amount-input-${i}`] || ''
+                            });
+                        }
+                        newData.agentName = oldObj['agent-name'] || '';
+                        newData.agentSsn = oldObj['agent-ssn'] || '';
+                        newData.agentAddress = oldObj['agent-address'] || '';
+                        newData.agentRelation = oldObj['agent-relation'] || '';
+                        newData.dateYear = oldObj['date-year'] || '';
+                        newData.dateMonth = oldObj['date-month'] || '';
+                        newData.dateDay = oldObj['date-day'] || '';
+                        newData.applicantName = oldObj['applicant-name'] || '';
+                        pagesData = [newData];
+                    } catch(e) {}
+                }
+            }
+
+            pagesWrapper.innerHTML = ''; 
+
+            if (pagesData && pagesData.length > 0) {
+                pagesData.forEach(pData => addPage(pData));
+            } else {
+                addPage(); 
+            }
+        }
+
+        // --- 6. 초기화 함수들 ---
+        window.clearPageSection = function(btn, section) {
+            const page = btn.closest('.print-container');
+            if (section === 'payment') {
+                if(!confirm('이 페이지의 지급 내역만 지우시겠습니까?')) return;
+                page.querySelectorAll('.transaction-tbody input').forEach(el => el.value = '');
+                calculatePageTotal(page);
+            } else if (section === 'agent') {
+                if(!confirm('이 페이지의 대리인 정보만 지우시겠습니까?')) return;
+                page.querySelectorAll('.agent-tbody input').forEach(el => el.value = '');
+            }
+            saveAllData();
+        };
+
+        window.globalClearAll = function() {
+            if(!confirm('작성한 "모든 페이지"의 내용을 지우고 1장으로 초기화하시겠습니까?\n(주소록 설정은 유지됩니다)')) return;
+            pagesWrapper.innerHTML = '';
+            addPage();
+            saveAllData();
+        };
+
+        // --- 7. 다중 페이지 엑셀 입출력 ---
+        window.exportToExcel = function() {
+            const wb = XLSX.utils.book_new();
+            const pages = document.querySelectorAll('.print-container');
+            
+            pages.forEach((page, pageIndex) => {
+                const data = getPageData(page);
+                const excelData = [
+                    ['일괄처리(지급) 요청서', '', '', '', ''], 
+                    [''], 
+                    ['순번', '입금은행', '입금계좌번호', '수취인명', '거래금액(원)'] 
+                ];
+
+                for (let i = 0; i < 10; i++) {
+                    const row = data.transactions[i];
+                    excelData.push([
+                        i + 1,
+                        row.bank,
+                        row.account,
+                        row.recipient,
+                        row.amount ? Number(unformatNumber(row.amount)) : null
+                    ]);
+                }
+
+                const totalStr = page.querySelector('.total-amount').value;
+                excelData.push(['합계', '', '', '', totalStr ? Number(unformatNumber(totalStr)) : 0]);
+                
+                excelData.push(['']); 
+                excelData.push(['[ 대리인 기재사항 ]', '', '', '', '']); 
+                excelData.push(['성 명', data.agentName, '주민번호', data.agentSsn, '']);
+                excelData.push(['주소/연락처', data.agentAddress, '본인과의관계', data.agentRelation, '']);
+                excelData.push(['']); 
+                const dateStr = `${data.dateYear ? data.dateYear+'년' : ''} ${data.dateMonth ? data.dateMonth+'월' : ''} ${data.dateDay ? data.dateDay+'일' : ''}`.trim();
+                excelData.push(['신청일', dateStr, '', '신청인', data.applicantName]); 
+
+                const ws = XLSX.utils.aoa_to_sheet(excelData);
+                ws['!cols'] = [{wch: 10}, {wch: 15}, {wch: 25}, {wch: 20}, {wch: 15}];
+                ws['!merges'] = [
+                    { s: {r: 0, c: 0}, e: {r: 0, c: 4} }, 
+                    { s: {r: 13, c: 0}, e: {r: 13, c: 3} }, 
+                    { s: {r: 15, c: 0}, e: {r: 15, c: 4} }, 
+                    { s: {r: 16, c: 3}, e: {r: 16, c: 4} }, 
+                    { s: {r: 17, c: 3}, e: {r: 17, c: 4} }  
+                ];
+
+                for (let r = 3; r <= 13; r++) {
+                    const cellRef = XLSX.utils.encode_cell({r: r, c: 4});
+                    if (ws[cellRef] && ws[cellRef].t === 'n') ws[cellRef].z = '₩#,##0'; 
+                }
+
+                XLSX.utils.book_append_sheet(wb, ws, `페이지_${pageIndex + 1}`);
+            });
+            
+            const firstPageData = getPageData(document.querySelector('.print-container'));
+            const fileDate = `${firstPageData.dateYear || '0000'}${firstPageData.dateMonth || '00'}${firstPageData.dateDay || '00'}`;
+            XLSX.writeFile(wb, `다중지급요청서_${fileDate}.xlsx`);
+        };
+
         document.getElementById('excel-upload-data').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -436,128 +700,58 @@
             reader.onload = function(evt) {
                 try {
                     const workbook = XLSX.read(evt.target.result, { type: 'binary' });
-                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const excelData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-                    if(excelData.length < 10) throw new Error("양식이 일치하지 않습니다.");
+                    pagesWrapper.innerHTML = ''; 
+                    
+                    workbook.SheetNames.forEach(sheetName => {
+                        const worksheet = workbook.Sheets[sheetName];
+                        const excelData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                        if(excelData.length < 10) return; 
 
-                    clearAllData(false); 
-
-                    for(let i=0; i<10; i++){
-                        const row = excelData[i+3] || [];
-                        if(row[1]) document.querySelector(`.bank-input[data-index="${i}"]`).value = row[1];
-                        if(row[2]) document.querySelector(`.account-input[data-index="${i}"]`).value = row[2];
-                        if(row[3]) document.querySelector(`.recipient-input[data-index="${i}"]`).value = row[3];
-                        if(row[4]) document.querySelector(`.amount-input[data-index="${i}"]`).value = formatNumber(row[4]);
-                    }
-
-                    if(excelData[16]) {
-                        document.getElementById('agent-name').value = excelData[16][1] || '';
-                        document.getElementById('agent-ssn').value = excelData[16][3] || '';
-                    }
-                    if(excelData[17]) {
-                        document.getElementById('agent-address').value = excelData[17][1] || '';
-                        document.getElementById('agent-relation').value = excelData[17][3] || '';
-                    }
-                    if(excelData[19]) {
-                        const dateText = excelData[19][1] || '';
-                        const dateMatch = dateText.match(/(\d+)년\s*(\d+)월\s*(\d+)일/);
-                        if(dateMatch) {
-                            document.getElementById('date-year').value = dateMatch[1];
-                            document.getElementById('date-month').value = dateMatch[2];
-                            document.getElementById('date-day').value = dateMatch[3];
+                        const pData = { transactions: [] };
+                        for(let i=0; i<10; i++){
+                            const row = excelData[i+3] || [];
+                            pData.transactions.push({
+                                bank: row[1] || '',
+                                account: row[2] || '',
+                                recipient: row[3] || '',
+                                amount: row[4] ? formatNumber(row[4]) : ''
+                            });
                         }
-                        document.getElementById('applicant-name').value = excelData[19][4] || '';
-                    }
+                        if(excelData[16]) {
+                            pData.agentName = excelData[16][1] || '';
+                            pData.agentSsn = excelData[16][3] || '';
+                        }
+                        if(excelData[17]) {
+                            pData.agentAddress = excelData[17][1] || '';
+                            pData.agentRelation = excelData[17][3] || '';
+                        }
+                        if(excelData[19]) {
+                            const dateMatch = (excelData[19][1] || '').match(/(\d+)년\s*(\d+)월\s*(\d+)일/);
+                            if(dateMatch) {
+                                pData.dateYear = dateMatch[1];
+                                pData.dateMonth = dateMatch[2];
+                                pData.dateDay = dateMatch[3];
+                            }
+                            pData.applicantName = excelData[19][4] || '';
+                        }
+                        addPage(pData);
+                    });
 
-                    calculateTotal();
-                    updateDateToggleUI();
-                    saveData();
-                    alert('내보낸 양식을 성공적으로 불러왔습니다.');
+                    if(pagesWrapper.children.length === 0) throw new Error("유효한 페이지가 없습니다.");
+                    
+                    saveAllData();
+                    alert(`총 ${pagesWrapper.children.length}장의 페이지를 불러왔습니다.`);
                 } catch (error) {
                     alert('파일을 읽을 수 없습니다. (지원되는 양식이 아닙니다.)');
+                    if(pagesWrapper.children.length === 0) addPage();
                 }
                 e.target.value = ''; 
             };
             reader.readAsBinaryString(file);
         });
 
-        // 8. 자동 저장 및 로드
-        function saveData() {
-            const data = {};
-            allInputs.forEach(input => {
-                if (input.id !== 'total-amount') {
-                    const key = input.id || `${input.className.split(' ')[0]}-${input.dataset.index}`;
-                    data[key] = input.value;
-                }
-            });
-            localStorage.setItem('paymentFormDataV1_7', JSON.stringify(data));
-        }
-
-        function loadData() {
-            // 하위 버전 데이터 마이그레이션 적용
-            const savedForm = localStorage.getItem('paymentFormDataV1_7') || localStorage.getItem('paymentFormDataV1_6') || localStorage.getItem('paymentFormDataV1_5') || localStorage.getItem('paymentFormDataV1_4');
-            if (savedForm) {
-                const data = JSON.parse(savedForm);
-                allInputs.forEach(input => {
-                    if (input.id !== 'total-amount') {
-                        const key = input.id || `${input.className.split(' ')[0]}-${input.dataset.index}`;
-                        if (data[key] !== undefined) {
-                            input.value = data[key];
-                        }
-                    }
-                });
-                calculateTotal();
-                updateDateToggleUI();
-            }
-
-            const savedAddressBook = localStorage.getItem('addressBookDataV1_7') || localStorage.getItem('addressBookDataV1_6') || localStorage.getItem('addressBookDataV1_5') || localStorage.getItem('addressBookDataV1_4');
-            if (savedAddressBook) {
-                addressBookData = JSON.parse(savedAddressBook);
-            }
-        }
-
-        allInputs.forEach(input => input.addEventListener('input', saveData));
-
-        // 9. 초기화 함수들
-        window.clearRow = function(index) {
-            if(!confirm(`${index + 1}번 항목을 지우시겠습니까?`)) return;
-            document.querySelector(`.bank-input[data-index="${index}"]`).value = '';
-            document.querySelector(`.account-input[data-index="${index}"]`).value = '';
-            document.querySelector(`.recipient-input[data-index="${index}"]`).value = '';
-            document.querySelector(`.amount-input[data-index="${index}"]`).value = '';
-            calculateTotal();
-            saveData();
-        };
-
-        window.clearPaymentData = function(askConfirm = true) {
-            if(askConfirm && !confirm('지급 내역(표 내용)만 모두 지우시겠습니까?')) return;
-            document.querySelectorAll('.bank-input, .account-input, .recipient-input, .amount-input').forEach(el => el.value = '');
-            calculateTotal();
-            saveData();
-        };
-
-        window.clearAgentData = function(askConfirm = true) {
-            if(askConfirm && !confirm('대리인 정보만 지우시겠습니까?')) return;
-            document.getElementById('agent-name').value = '';
-            document.getElementById('agent-ssn').value = '';
-            document.getElementById('agent-address').value = '';
-            document.getElementById('agent-relation').value = '';
-            saveData();
-        };
-
-        window.clearAllData = function(askConfirm = true) {
-            if(askConfirm && !confirm('작성한 폼 내용을 모두 초기화하시겠습니까?\n(불러온 주소록은 유지됩니다)')) return;
-            
-            allInputs.forEach(input => {
-                if (input.id !== 'total-amount') input.value = '';
-            });
-            
-            calculateTotal();
-            updateDateToggleUI();
-            saveData();
-        };
-
-        document.addEventListener('DOMContentLoaded', loadData);
+        // 앱 시작
+        document.addEventListener('DOMContentLoaded', loadInitialData);
     </script>
 </body>
 </html>
