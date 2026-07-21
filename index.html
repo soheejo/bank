@@ -46,7 +46,6 @@
             font-weight: 500;
         }
 
-        /* 툴바 상단 고정 */
         .sticky-toolbar {
             position: sticky;
             top: 0;
@@ -68,7 +67,7 @@
                 max-width: 100% !important;
                 width: 100% !important;
                 border: none !important;
-                break-after: page; /* 다중 페이지 출력 시 페이지 나눔 */
+                break-after: page; 
             }
             .print-container:last-child {
                 break-after: auto;
@@ -80,13 +79,11 @@
 </head>
 <body class="flex flex-col items-center min-h-screen">
 
-    <!-- 상단 고정 툴바 -->
     <div class="sticky-toolbar w-full flex justify-center py-3 px-4 shadow-sm no-print mb-6">
         <div class="w-full max-w-[850px] flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <span class="text-bank-red font-bold text-lg tracking-wider">v1.12</span>
+                <span class="text-bank-red font-bold text-lg tracking-wider">v1.13</span>
                 <div class="h-5 w-px bg-gray-300"></div>
-                <!-- 주소록 관리 패널 -->
                 <div class="flex items-center bg-gray-100 rounded-md border border-gray-200 px-2 py-1 gap-2">
                     <span id="address-book-status" class="text-xs font-semibold text-gray-600 w-[70px] text-center">주소록 없음</span>
                     <label class="cursor-pointer text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1 rounded text-xs font-medium transition-colors" title="새로운 주소록 엑셀 파일 가져오기">
@@ -120,27 +117,22 @@
         </div>
     </div>
 
-    <!-- 다중 페이지가 추가될 컨테이너 -->
     <div id="pages-wrapper" class="w-full flex flex-col items-center gap-10 pb-8 px-4">
-        <!-- JS가 템플릿을 복제하여 여기에 삽입합니다. -->
+        <!-- JS 자동 생성 -->
     </div>
 
-    <!-- 페이지 추가 버튼 -->
     <div class="w-full max-w-[850px] px-4 pb-20 no-print flex justify-center">
         <button onclick="addPage()" class="w-full border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400 font-bold py-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-lg">
             <span class="text-2xl">+</span> 새 페이지 추가
         </button>
     </div>
 
-    <!-- 페이지 생성용 템플릿 (보이지 않음) -->
     <template id="page-template">
         <div class="print-container w-full max-w-[850px] bg-white shadow-xl rounded-sm p-8 md:p-12 relative border border-gray-200">
-            <!-- 개별 페이지 삭제 버튼 -->
             <button type="button" class="delete-page-btn no-print absolute top-4 right-4 text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 px-2 py-1 rounded text-xs transition-colors" onclick="removePage(this)">
                 🗑️ 이 페이지 삭제
             </button>
 
-            <!-- 개별 페이지 부분 초기화 및 대리인 복사/붙여넣기 (v1.9 변경점) -->
             <div class="no-print absolute top-4 left-4 flex gap-1.5 items-center">
                 <button onclick="clearPageSection(this, 'payment')" class="text-[10px] text-gray-500 hover:text-black border border-gray-200 bg-gray-50 hover:bg-gray-200 px-2 py-1 rounded transition-colors">지급 비우기</button>
                 <button onclick="clearPageSection(this, 'agent')" class="text-[10px] text-gray-500 hover:text-black border border-gray-200 bg-gray-50 hover:bg-gray-200 px-2 py-1 rounded transition-colors">대리인 비우기</button>
@@ -176,7 +168,7 @@
                         </tr>
                     </thead>
                     <tbody class="transaction-tbody text-center">
-                        <!-- JS 렌더링 영역 (10줄) -->
+                        <!-- JS 렌더링 -->
                     </tbody>
                     <tfoot>
                         <tr class="bg-bank-pink font-bold border-t-2 border-bank-red text-black">
@@ -256,19 +248,18 @@
 
     <script>
         let addressBookData = [];
-        let copiedAgentData = null; // 대리인 정보 복사를 위한 임시 저장소
+        let copiedAgentData = null; 
         const pagesWrapper = document.getElementById('pages-wrapper');
         const pageTemplate = document.getElementById('page-template');
 
-        // --- 공통 유틸리티 ---
         const formatNumber = num => num ? parseInt(num, 10).toLocaleString('ko-KR') : '';
         const unformatNumber = str => str.toString().replace(/[^\d]/g, '');
 
-        // --- 1. 다중 페이지 관리 시스템 ---
         function createTransactionRows(tbody) {
             for (let i = 1; i <= 10; i++) {
                 const tr = document.createElement('tr');
                 if(i % 2 === 0) tr.classList.add('bg-gray-50'); 
+                // 수취인명칸에 주소록 다중 계좌 선택용 list="address-book-list" 추가
                 tr.innerHTML = `
                     <td class="border border-bank-red py-2 font-medium text-gray-600 relative group">
                         ${i}
@@ -276,7 +267,7 @@
                     </td>
                     <td class="border border-bank-red py-1 px-1"><input type="text" list="bank-list" class="bank-input" data-row="${i-1}" placeholder="은행명"></td>
                     <td class="border border-bank-red py-1 px-1"><input type="text" class="account-input" data-row="${i-1}" placeholder="'-' 포함"></td>
-                    <td class="border border-bank-red py-1 px-1"><input type="text" class="recipient-input" data-row="${i-1}" placeholder="예금주 (이니셜)"></td>
+                    <td class="border border-bank-red py-1 px-1"><input type="text" class="recipient-input" data-row="${i-1}" placeholder="예금주 (이니셜)" list="address-book-list"></td>
                     <td class="border border-bank-red py-1 px-1">
                         <div class="flex items-center w-full px-1">
                             <span class="text-gray-600 font-medium mr-1">￦</span>
@@ -288,13 +279,42 @@
             }
         }
 
+        // --- 다중 계좌 선택용 Datalist 동적 생성 (v1.13 핵심 로직) ---
+        function buildAddressDatalist() {
+            let datalist = document.getElementById('address-book-list');
+            if (!datalist) {
+                datalist = document.createElement('datalist');
+                datalist.id = 'address-book-list';
+                document.body.appendChild(datalist);
+            }
+            datalist.innerHTML = '';
+            
+            addressBookData.forEach((d, index) => {
+                // 뒤에 붙은 숫자(1, 2 등)를 제거한 깔끔한 이름
+                const cleanName = d.name.replace(/\s*\d+$/, '').trim();
+                
+                // 1. 이름 기준 옵션 
+                const optName = document.createElement('option');
+                optName.value = `${d.name} [${d.bank} ${d.account}]`; 
+                optName.dataset.index = index;
+                datalist.appendChild(optName);
+
+                // 2. 이니셜 기준 옵션
+                if (d.initial) {
+                    const optInit = document.createElement('option');
+                    optInit.value = `${d.initial} [${d.bank} ${d.account}]`;
+                    optInit.dataset.index = index;
+                    datalist.appendChild(optInit);
+                }
+            });
+        }
+
         function addPage(data = null) {
             const clone = pageTemplate.content.cloneNode(true);
             const container = clone.querySelector('.print-container');
             createTransactionRows(container.querySelector('.transaction-tbody'));
             
             pagesWrapper.appendChild(clone);
-            
             if (data) fillPageData(container, data);
             
             updateDeleteButtons();
@@ -315,14 +335,13 @@
 
         function updateDeleteButtons() {
             const pages = document.querySelectorAll('.print-container');
-            pages.forEach((page, index) => {
+            pages.forEach((page) => {
                 const btn = page.querySelector('.delete-page-btn');
                 if (pages.length === 1) btn.style.display = 'none';
                 else btn.style.display = 'block';
             });
         }
 
-        // --- 2. 대리인 복사/붙여넣기 및 페이지별 로직 (v1.9 추가점) ---
         window.copyAgentData = function(btn) {
             const page = btn.closest('.print-container');
             copiedAgentData = {
@@ -332,7 +351,6 @@
                 relation: page.querySelector('.agent-relation').value
             };
             
-            // 시각적 피드백
             const originalText = btn.innerText;
             btn.innerText = '복사 완료!';
             btn.classList.replace('text-blue-600', 'text-white');
@@ -401,7 +419,7 @@
             }
         }
 
-        // --- 3. 이벤트 위임 (통합 리스너) ---
+        // --- 통합 이벤트 리스너 (입력값 제어) ---
         pagesWrapper.addEventListener('input', function(e) {
             const page = e.target.closest('.print-container');
             
@@ -411,18 +429,36 @@
                 calculatePageTotal(page);
             }
             
-            // 이니셜 주소록 자동완성 감지 (v1.9 변경점: 대소문자 구분 없음)
+            // 수취인명 입력/드롭다운 선택 시 (v1.13 개선)
             if (e.target.classList.contains('recipient-input')) {
                 const val = e.target.value.trim();
                 if (val && addressBookData.length > 0) {
-                    const valLower = val.toLowerCase(); // 입력값을 소문자로 변환
-                    const match = addressBookData.find(d => 
-                        d.name === val || d.initial.toLowerCase() === valLower // 등록된 이니셜도 소문자로 변환 후 비교
-                    );
+                    let match = null;
                     
+                    // 1. 드롭다운(Datalist)에서 명시적으로 클릭/선택한 경우 (정확한 계좌 타겟팅)
+                    const datalist = document.getElementById('address-book-list');
+                    if (datalist) {
+                        const matchedOption = Array.from(datalist.options).find(opt => opt.value === val);
+                        if (matchedOption) {
+                            match = addressBookData[matchedOption.dataset.index];
+                        }
+                    }
+                    
+                    // 2. 수동으로 타자를 친 경우 (대소문자 무시 검색)
+                    if (!match) {
+                        const valLower = val.toLowerCase();
+                        match = addressBookData.find(d => 
+                            d.name.toLowerCase() === valLower || 
+                            (d.initial && d.initial.toLowerCase() === valLower)
+                        );
+                    }
+
+                    // 3. 일치하는 정보를 찾으면 화면에 렌더링
                     if (match) {
                         const tr = e.target.closest('tr');
-                        e.target.value = match.name;
+                        // 핵심: 주소록 이름이 '김민준1', 'MJ2' 이더라도, 화면에는 숫자를 제외한 '김민준'으로 덮어씀
+                        e.target.value = match.name.replace(/\s*\d+$/, '').trim(); 
+                        
                         if(match.bank) tr.querySelector('.bank-input').value = match.bank;
                         if(match.account) tr.querySelector('.account-input').value = match.account;
                     }
@@ -462,7 +498,6 @@
             }
         });
 
-        // --- 4. 주소록 관리 ---
         function updateAddressBookStatus() {
             const statusEl = document.getElementById('address-book-status');
             if (addressBookData.length > 0) {
@@ -491,8 +526,10 @@
                         account: (row['계좌'] || '').toString().trim()
                     }));
                     
-                    localStorage.setItem('addressBookDataV1_9', JSON.stringify(addressBookData));
+                    localStorage.setItem('addressBookDataV1_13', JSON.stringify(addressBookData));
                     updateAddressBookStatus();
+                    buildAddressDatalist(); // 주소록 다중계좌 드롭다운 빌드
+                    
                     alert(`새 주소록(${addressBookData.length}건)이 적용 및 저장되었습니다.`);
                 } catch (error) {
                     alert('주소록 엑셀 파일을 읽는 중 오류가 발생했습니다.');
@@ -508,12 +545,12 @@
             }
             if(confirm('주소록 연동을 해제하고 브라우저 저장소에서 지우시겠습니까?\n(수기로만 입력하게 됩니다)')) {
                 addressBookData = [];
-                localStorage.removeItem('addressBookDataV1_9');
+                localStorage.removeItem('addressBookDataV1_13');
                 updateAddressBookStatus();
+                buildAddressDatalist(); // 드롭다운도 비움
             }
         };
 
-        // --- 5. 데이터 저장 / 로드 / 직렬화 ---
         function getPageData(pageElement) {
             const data = { transactions: [] };
             for(let i=0; i<10; i++) {
@@ -560,49 +597,22 @@
 
         function saveAllData() {
             const pages = Array.from(document.querySelectorAll('.print-container')).map(getPageData);
-            localStorage.setItem('paymentFormDataV1_9', JSON.stringify(pages));
+            localStorage.setItem('paymentFormDataV1_13', JSON.stringify(pages));
         }
 
         function loadInitialData() {
-            // 하위 버전 호환 포함 주소록 로드
-            const savedAddressBook = localStorage.getItem('addressBookDataV1_9') || localStorage.getItem('addressBookDataV1_8') || localStorage.getItem('addressBookDataV1_7');
+            const savedAddressBook = localStorage.getItem('addressBookDataV1_13') || localStorage.getItem('addressBookDataV1_12') || localStorage.getItem('addressBookDataV1_9');
             if (savedAddressBook) {
                 addressBookData = JSON.parse(savedAddressBook);
                 updateAddressBookStatus();
+                buildAddressDatalist(); // 드롭다운 동적 생성
             }
 
-            // 양식 로드
-            let savedPagesStr = localStorage.getItem('paymentFormDataV1_9') || localStorage.getItem('paymentFormDataV1_8');
+            let savedPagesStr = localStorage.getItem('paymentFormDataV1_13') || localStorage.getItem('paymentFormDataV1_12') || localStorage.getItem('paymentFormDataV1_9');
             let pagesData = null;
             
             if (savedPagesStr) {
                 pagesData = JSON.parse(savedPagesStr);
-            } else {
-                // 더 구버전 (v1.7 이하 단일페이지) 데이터 마이그레이션
-                const oldDataStr = localStorage.getItem('paymentFormDataV1_7') || localStorage.getItem('paymentFormDataV1_6');
-                if (oldDataStr) {
-                    try {
-                        const oldObj = JSON.parse(oldDataStr);
-                        const newData = { transactions: [] };
-                        for(let i=0; i<10; i++) {
-                            newData.transactions.push({
-                                bank: oldObj[`bank-input-${i}`] || '',
-                                account: oldObj[`account-input-${i}`] || '',
-                                recipient: oldObj[`recipient-input-${i}`] || '',
-                                amount: oldObj[`amount-input-${i}`] || ''
-                            });
-                        }
-                        newData.agentName = oldObj['agent-name'] || '';
-                        newData.agentSsn = oldObj['agent-ssn'] || '';
-                        newData.agentAddress = oldObj['agent-address'] || '';
-                        newData.agentRelation = oldObj['agent-relation'] || '';
-                        newData.dateYear = oldObj['date-year'] || '';
-                        newData.dateMonth = oldObj['date-month'] || '';
-                        newData.dateDay = oldObj['date-day'] || '';
-                        newData.applicantName = oldObj['applicant-name'] || '';
-                        pagesData = [newData];
-                    } catch(e) {}
-                }
             }
 
             pagesWrapper.innerHTML = ''; 
@@ -614,7 +624,6 @@
             }
         }
 
-        // --- 6. 초기화 함수들 ---
         window.clearPageSection = function(btn, section) {
             const page = btn.closest('.print-container');
             if (section === 'payment') {
@@ -635,7 +644,6 @@
             saveAllData();
         };
 
-        // --- 7. 다중 페이지 엑셀 입출력 ---
         window.exportToExcel = function() {
             const wb = XLSX.utils.book_new();
             const pages = document.querySelectorAll('.print-container');
@@ -688,12 +696,9 @@
                 XLSX.utils.book_append_sheet(wb, ws, `페이지_${pageIndex + 1}`);
             });
             
-            const now = new Date();
-            const yyyy = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const dd = String(now.getDate()).padStart(2, '0');
-            const fileDate = `${yyyy}${mm}${dd}`;
-            
+            const firstPageData = getPageData(document.querySelector('.print-container'));
+            // 연월일 파일명 포맷 (v1.12 반영본)
+            const fileDate = `${firstPageData.dateYear || '0000'}${firstPageData.dateMonth || '00'}${firstPageData.dateDay || '00'}`;
             XLSX.writeFile(wb, `다중지급요청서_${fileDate}.xlsx`);
         };
 
@@ -754,7 +759,6 @@
             reader.readAsBinaryString(file);
         });
 
-        // 앱 시작
         document.addEventListener('DOMContentLoaded', loadInitialData);
     </script>
 </body>
