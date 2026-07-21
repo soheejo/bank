@@ -451,6 +451,26 @@
                             d.name.toLowerCase() === valLower || 
                             (d.initial && d.initial.toLowerCase() === valLower)
                         );
+                        
+                        // 2-1. '이름+숫자' 또는 '이니셜+숫자' 형태 매칭 (예: 김민준2, MJ2)
+                        if (!match) {
+                            const nameMatch = valLower.match(/^(.*?)(\d+)$/);
+                            if (nameMatch) {
+                                const baseText = nameMatch[1].trim(); // 예: '김민준' 또는 'mj'
+                                const index = parseInt(nameMatch[2], 10); // 예: 2
+                                
+                                // baseText와 이름 또는 이니셜이 일치하는 모든 항목을 수집
+                                const candidates = addressBookData.filter(d => 
+                                    d.name.toLowerCase() === baseText || 
+                                    (d.initial && d.initial.toLowerCase() === baseText)
+                                );
+                                
+                                // 해당 순번(1-based)의 계좌가 존재하면 매칭
+                                if (candidates.length >= index) {
+                                    match = candidates[index - 1]; // 배열은 0부터 시작하므로 index - 1
+                                }
+                            }
+                        }
                     }
 
                     // 3. 일치하는 정보를 찾으면 화면에 렌더링
