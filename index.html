@@ -82,16 +82,16 @@
     <div class="sticky-toolbar w-full flex justify-center py-3 px-4 shadow-sm no-print mb-6">
         <div class="w-full max-w-[850px] flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <span class="text-bank-red font-bold text-lg tracking-wider">v1.13</span>
+                <span class="text-bank-red font-bold text-lg tracking-wider">v1.15</span>
                 <div class="h-5 w-px bg-gray-300"></div>
                 <div class="flex items-center bg-gray-100 rounded-md border border-gray-200 px-2 py-1 gap-2">
                     <span id="address-book-status" class="text-xs font-semibold text-gray-600 w-[70px] text-center">주소록 없음</span>
-                    <label class="cursor-pointer text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1 rounded text-xs font-medium transition-colors" title="새로운 주소록 엑셀 파일 가져오기">
-                        📁 새 파일
+                    <label class="cursor-pointer text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1 rounded text-xs font-medium transition-colors" title="새로운 주소록 엑셀 파일 누적 추가하기">
+                        📁 추가 로드
                         <input type="file" id="excel-upload-address" class="hidden" accept=".xlsx, .xls">
                     </label>
-                    <button onclick="clearAddressBook()" class="text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded text-xs font-medium transition-colors" title="주소록 연동 해제 및 비우기">
-                        ❌ 끄기
+                    <button onclick="clearAddressBook()" class="text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded text-xs font-medium transition-colors" title="주소록 연동 해제 및 전체 비우기">
+                        ❌ 비우기
                     </button>
                 </div>
             </div>
@@ -138,7 +138,7 @@
                 <button onclick="clearPageSection(this, 'agent')" class="text-[10px] text-gray-500 hover:text-black border border-gray-200 bg-gray-50 hover:bg-gray-200 px-2 py-1 rounded transition-colors">대리인 비우기</button>
                 <div class="w-px h-3 bg-gray-300 mx-0.5"></div>
                 <button onclick="copyAgentData(this)" class="text-[10px] text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded transition-colors shadow-sm" title="이 페이지의 대리인 정보를 복사합니다.">대리인 복사</button>
-                <button onclick="pasteAgentData(this)" class="text-[10px] text-emerald-600 hover:text-emerald-800 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded transition-colors shadow-sm" title="복사해둔 대리인 정보를 이 페이지에 붙여넣습니다.">붙여넣기</button>
+                <button onclick="pasteAgentData(this)" class="text-[10px] text-emerald-600 hover:text-emerald-800 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded transition-colors shadow-sm" title="복복해둔 대리인 정보를 이 페이지에 붙여넣습니다.">붙여넣기</button>
             </div>
 
             <header class="flex justify-between items-end mb-8 mt-12">
@@ -279,7 +279,7 @@
             }
         }
 
-        // --- 다중 계좌 선택용 Datalist 동적 생성 (v1.13 핵심 로직) ---
+        // --- 다중 계좌 선택용 Datalist 동적 생성 ---
         function buildAddressDatalist() {
             let datalist = document.getElementById('address-book-list');
             if (!datalist) {
@@ -290,21 +290,25 @@
             datalist.innerHTML = '';
             
             addressBookData.forEach((d, index) => {
-                // 뒤에 붙은 숫자(1, 2 등)를 제거한 깔끔한 이름
                 const cleanName = d.name.replace(/\s*\d+$/, '').trim();
                 
-                // 1. 이름 기준 옵션 
                 const optName = document.createElement('option');
                 optName.value = `${d.name} [${d.bank} ${d.account}]`; 
                 optName.dataset.index = index;
                 datalist.appendChild(optName);
 
-                // 2. 이니셜 기준 옵션
-                if (d.initial) {
+                if (d.initial && d.initial !== d.name) {
                     const optInit = document.createElement('option');
                     optInit.value = `${d.initial} [${d.bank} ${d.account}]`;
                     optInit.dataset.index = index;
                     datalist.appendChild(optInit);
+                }
+
+                if (d.company && d.company !== d.name) {
+                    const optCompany = document.createElement('option');
+                    optCompany.value = `${d.company} [${d.bank} ${d.account}]`;
+                    optCompany.dataset.index = index;
+                    datalist.appendChild(optCompany);
                 }
             });
         }
@@ -419,7 +423,7 @@
             }
         }
 
-        // --- 통합 이벤트 리스너 (입력값 제어) ---
+        // --- 통합 이벤트 리스너 ---
         pagesWrapper.addEventListener('input', function(e) {
             const page = e.target.closest('.print-container');
             
@@ -429,13 +433,11 @@
                 calculatePageTotal(page);
             }
             
-            // 수취인명 입력/드롭다운 선택 시 (v1.13 개선)
             if (e.target.classList.contains('recipient-input')) {
                 const val = e.target.value.trim();
                 if (val && addressBookData.length > 0) {
                     let match = null;
                     
-                    // 1. 드롭다운(Datalist)에서 명시적으로 클릭/선택한 경우 (정확한 계좌 타겟팅)
                     const datalist = document.getElementById('address-book-list');
                     if (datalist) {
                         const matchedOption = Array.from(datalist.options).find(opt => opt.value === val);
@@ -444,39 +446,35 @@
                         }
                     }
                     
-                    // 2. 수동으로 타자를 친 경우 (대소문자 무시 검색)
                     if (!match) {
                         const valLower = val.toLowerCase();
                         match = addressBookData.find(d => 
                             d.name.toLowerCase() === valLower || 
-                            (d.initial && d.initial.toLowerCase() === valLower)
+                            (d.initial && d.initial.toLowerCase() === valLower) ||
+                            (d.company && d.company.toLowerCase() === valLower)
                         );
                         
-                        // 2-1. '이름+숫자' 또는 '이니셜+숫자' 형태 매칭 (예: 김민준2, MJ2)
                         if (!match) {
                             const nameMatch = valLower.match(/^(.*?)(\d+)$/);
                             if (nameMatch) {
-                                const baseText = nameMatch[1].trim(); // 예: '김민준' 또는 'mj'
-                                const index = parseInt(nameMatch[2], 10); // 예: 2
+                                const baseText = nameMatch[1].trim(); 
+                                const index = parseInt(nameMatch[2], 10); 
                                 
-                                // baseText와 이름 또는 이니셜이 일치하는 모든 항목을 수집
                                 const candidates = addressBookData.filter(d => 
                                     d.name.toLowerCase() === baseText || 
-                                    (d.initial && d.initial.toLowerCase() === baseText)
+                                    (d.initial && d.initial.toLowerCase() === baseText) ||
+                                    (d.company && d.company.toLowerCase() === baseText)
                                 );
                                 
-                                // 해당 순번(1-based)의 계좌가 존재하면 매칭
                                 if (candidates.length >= index) {
-                                    match = candidates[index - 1]; // 배열은 0부터 시작하므로 index - 1
+                                    match = candidates[index - 1]; 
                                 }
                             }
                         }
                     }
 
-                    // 3. 일치하는 정보를 찾으면 화면에 렌더링
                     if (match) {
                         const tr = e.target.closest('tr');
-                        // 핵심: 주소록 이름이 '김민준1', 'MJ2' 이더라도, 화면에는 숫자를 제외한 '김민준'으로 덮어씀
                         e.target.value = match.name.replace(/\s*\d+$/, '').trim(); 
                         
                         if(match.bank) tr.querySelector('.bank-input').value = match.bank;
@@ -529,6 +527,7 @@
             }
         }
 
+        // --- 핵심 v1.15 인공지능형 주소록 스캔 로직 ---
         document.getElementById('excel-upload-address').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -536,23 +535,80 @@
             reader.onload = function(evt) {
                 try {
                     const workbook = XLSX.read(evt.target.result, { type: 'binary' });
-                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const json = XLSX.utils.sheet_to_json(worksheet);
                     
-                    addressBookData = json.map(row => ({
-                        name: (row['이름'] || '').toString().trim(),
-                        initial: (row['이니셜'] || '').toString().trim(),
-                        bank: (row['은행'] || '').toString().trim(),
-                        account: (row['계좌'] || '').toString().trim()
-                    }));
+                    let allJson = [];
                     
-                    localStorage.setItem('addressBookDataV1_13', JSON.stringify(addressBookData));
+                    // 모든 시트를 순회합니다.
+                    workbook.SheetNames.forEach(sheetName => {
+                        const worksheet = workbook.Sheets[sheetName];
+                        
+                        // 1. 시트 전체를 2차원 배열로 읽어옵니다.
+                        const aoa = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        let headerRowIndex = 0;
+                        
+                        // 2. 최대 첫 15줄을 스캔하여 '진짜 헤더' 위치를 찾습니다.
+                        for (let r = 0; r < Math.min(15, aoa.length); r++) {
+                            const row = aoa[r] || [];
+                            // 공백을 제거한 셀 내용으로 키워드를 검사합니다.
+                            const cleanCells = row.map(c => (c || '').toString().replace(/\s+/g, ''));
+                            
+                            const hasNameLike = cleanCells.includes('이름') || cleanCells.includes('상호') || cleanCells.includes('예금주');
+                            const hasBankLike = cleanCells.includes('은행') || cleanCells.includes('계좌') || cleanCells.includes('계좌번호');
+                            
+                            // 이름 관련 단어와 계좌 관련 단어가 한 줄에 동시에 존재하면 그 줄을 헤더로 확정합니다.
+                            if (hasNameLike && hasBankLike) {
+                                headerRowIndex = r;
+                                break;
+                            }
+                        }
+                        
+                        // 3. 찾아낸 헤더 줄을 기준으로 다시 JSON으로 변환합니다.
+                        const sheetJson = XLSX.utils.sheet_to_json(worksheet, { range: headerRowIndex });
+                        allJson = allJson.concat(sheetJson);
+                    });
+                    
+                    const newData = allJson.map(row => {
+                        const cleanRow = {};
+                        for (let key in row) {
+                            if (row.hasOwnProperty(key)) {
+                                cleanRow[key.replace(/\s+/g, '')] = row[key];
+                            }
+                        }
+
+                        const name = (cleanRow['이름'] || cleanRow['예금주'] || '').toString().trim();
+                        const company = (cleanRow['상호'] || '').toString().trim();
+                        
+                        return {
+                            name: name || company,
+                            company: company,
+                            initial: (cleanRow['이니셜'] || '').toString().trim(),
+                            bank: (cleanRow['은행'] || '').toString().trim(),
+                            account: (cleanRow['계좌'] || cleanRow['계좌번호'] || '').toString().trim()
+                        };
+                    }).filter(d => d.name || d.company); 
+                    
+                    // 기존 주소록 데이터와 병합 (누적 추가) 및 중복 제거
+                    const mergedData = [...addressBookData, ...newData];
+                    const uniqueData = [];
+                    const seen = new Set();
+                    
+                    mergedData.forEach(item => {
+                        const key = `${item.name}-${item.bank}-${item.account}`;
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            uniqueData.push(item);
+                        }
+                    });
+                    
+                    addressBookData = uniqueData;
+                    localStorage.setItem('addressBookDataV1_15', JSON.stringify(addressBookData));
                     updateAddressBookStatus();
-                    buildAddressDatalist(); // 주소록 다중계좌 드롭다운 빌드
+                    buildAddressDatalist(); 
                     
-                    alert(`새 주소록(${addressBookData.length}건)이 적용 및 저장되었습니다.`);
+                    alert(`주소록이 누적 추가되었습니다!\n(현재 총 ${addressBookData.length}건 적용중)`);
                 } catch (error) {
                     alert('주소록 엑셀 파일을 읽는 중 오류가 발생했습니다.');
+                    console.error(error);
                 }
                 e.target.value = ''; 
             };
@@ -565,9 +621,9 @@
             }
             if(confirm('주소록 연동을 해제하고 브라우저 저장소에서 지우시겠습니까?\n(수기로만 입력하게 됩니다)')) {
                 addressBookData = [];
-                localStorage.removeItem('addressBookDataV1_13');
+                localStorage.removeItem('addressBookDataV1_15');
                 updateAddressBookStatus();
-                buildAddressDatalist(); // 드롭다운도 비움
+                buildAddressDatalist(); 
             }
         };
 
@@ -617,18 +673,18 @@
 
         function saveAllData() {
             const pages = Array.from(document.querySelectorAll('.print-container')).map(getPageData);
-            localStorage.setItem('paymentFormDataV1_13', JSON.stringify(pages));
+            localStorage.setItem('paymentFormDataV1_15', JSON.stringify(pages));
         }
 
         function loadInitialData() {
-            const savedAddressBook = localStorage.getItem('addressBookDataV1_13') || localStorage.getItem('addressBookDataV1_12') || localStorage.getItem('addressBookDataV1_9');
+            const savedAddressBook = localStorage.getItem('addressBookDataV1_15') || localStorage.getItem('addressBookDataV1_14') || localStorage.getItem('addressBookDataV1_13');
             if (savedAddressBook) {
                 addressBookData = JSON.parse(savedAddressBook);
                 updateAddressBookStatus();
-                buildAddressDatalist(); // 드롭다운 동적 생성
+                buildAddressDatalist(); 
             }
 
-            let savedPagesStr = localStorage.getItem('paymentFormDataV1_13') || localStorage.getItem('paymentFormDataV1_12') || localStorage.getItem('paymentFormDataV1_9');
+            let savedPagesStr = localStorage.getItem('paymentFormDataV1_15') || localStorage.getItem('paymentFormDataV1_14') || localStorage.getItem('paymentFormDataV1_13');
             let pagesData = null;
             
             if (savedPagesStr) {
@@ -717,7 +773,6 @@
             });
             
             const firstPageData = getPageData(document.querySelector('.print-container'));
-            // 연월일 파일명 포맷 (v1.12 반영본)
             const fileDate = `${firstPageData.dateYear || '0000'}${firstPageData.dateMonth || '00'}${firstPageData.dateDay || '00'}`;
             XLSX.writeFile(wb, `다중지급요청서_${fileDate}.xlsx`);
         };
