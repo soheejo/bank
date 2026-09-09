@@ -255,6 +255,9 @@
         <option value="SBI저축은행"></option>
     </datalist>
 
+    <!-- 연관 계좌 드롭다운용 리스트 복구 -->
+    <datalist id="address-book-list"></datalist>
+
     <script>
         let addressBookData = [];
         let copiedAgentData = null; 
@@ -264,8 +267,23 @@
         const formatNumber = num => num ? parseInt(num, 10).toLocaleString('ko-KR') : '';
         const unformatNumber = str => str.toString().replace(/[^\d]/g, '');
 
-        // --- 1. 다중 페이지 관리 시스템 ---
+        // --- 1. 다중 페이지 관리 시스템 (토글 함수 복구) ---
+        window.toggleSuggest = function() {
+            const toggleEl = document.getElementById('toggle-suggest');
+            if (!toggleEl) return;
+            const isChecked = toggleEl.checked;
+            document.querySelectorAll('.recipient-input').forEach(input => {
+                if (isChecked) input.setAttribute('list', 'address-book-list');
+                else input.removeAttribute('list');
+            });
+            localStorage.setItem('suggestToggleV1_19', isChecked ? 'true' : 'false');
+        };
+
         function createTransactionRows(tbody) {
+            const toggleEl = document.getElementById('toggle-suggest');
+            const isSuggestOn = toggleEl && toggleEl.checked;
+            const listAttr = isSuggestOn ? `list="address-book-list"` : '';
+
             for (let i = 1; i <= 10; i++) {
                 const tr = document.createElement('tr');
                 if(i % 2 === 0) tr.classList.add('bg-gray-50'); 
@@ -278,7 +296,7 @@
                     <td class="border border-bank-red py-1 px-1"><input type="text" list="bank-list" class="bank-input" data-row="${i-1}" placeholder="은행명"></td>
                     <td class="border border-bank-red py-1 px-1"><input type="text" class="account-input" data-row="${i-1}" placeholder="'-' 포함"></td>
                     <td class="border border-bank-red py-1 px-1 relative">
-                        <input type="text" class="recipient-input w-full pr-8" data-row="${i-1}" placeholder="예금주 (이니셜)">
+                        <input type="text" class="recipient-input w-full pr-8" data-row="${i-1}" placeholder="예금주 (이니셜)" ${listAttr}>
                         <span class="initial-hint absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-400 font-medium no-print pointer-events-none"></span>
                     </td>
                     <td class="border border-bank-red py-1 px-1">
@@ -493,7 +511,40 @@
             }
         });
 
-        // --- 4. 주소록 관리 ---
+        // --- 4. 주소록 관리 (드롭다운 목록 업데이트 복구) ---
+        function updateAddressBookDatalist() {
+            let datalist = document.getElementById('address-book-list');
+            if (!datalist) return;
+            datalist.innerHTML = '';
+            
+            const nameCounts = {};
+            
+            addressBookData.forEach(d => {
+                const baseName = d.name;
+                nameCounts[baseName] = (nameCounts[baseName] || 0) + 1;
+                const index = nameCounts[baseName];
+                
+                // 이름 뒤에 2부터 번호 매겨주기 (ex: 김민준, 김민준2)
+                const displayName = index > 1 ? `${baseName}${index}` : baseName;
+                
+                const opt1 = document.createElement('option');
+                opt1.value = displayName;
+                opt1.textContent = `[${d.bank}] ${d.account}`;
+                datalist.appendChild(opt1);
+                
+                if (d.initial) {
+                    const baseInitial = d.initial;
+                    const displayInitial = index > 1 ? `${baseInitial}${index}` : baseInitial;
+                    if (displayInitial.toLowerCase() !== displayName.toLowerCase()) {
+                        const opt2 = document.createElement('option');
+                        opt2.value = displayInitial;
+                        opt2.textContent = `${baseName} [${d.bank}]`;
+                        datalist.appendChild(opt2);
+                    }
+                }
+            });
+        }
+
         function updateAddressBookStatus() {
             const statusEl = document.getElementById('address-book-status');
             if (addressBookData.length > 0) {
@@ -503,6 +554,7 @@
                 statusEl.textContent = '주소록 없음';
                 statusEl.classList.replace('text-blue-600', 'text-gray-600');
             }
+            updateAddressBookDatalist();
         }
 
         document.getElementById('excel-upload-address').addEventListener('change', function(e) {
@@ -673,6 +725,14 @@
             } else {
                 addPage(); 
             }
+
+            // 토글 상태 복원 및 초기화 실행
+            const savedToggle = localStorage.getItem('suggestToggleV1_19');
+            if (savedToggle === 'true') {
+                const toggleEl = document.getElementById('toggle-suggest');
+                if(toggleEl) toggleEl.checked = true;
+            }
+            if (typeof toggleSuggest === 'function') toggleSuggest();
         }
 
         // --- 6. 초기화 함수들 ---
