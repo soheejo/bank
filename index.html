@@ -84,7 +84,7 @@
     <div class="sticky-toolbar w-full flex justify-center py-3 px-4 shadow-sm no-print mb-6">
         <div class="w-full max-w-[1050px] flex justify-between items-center gap-4">
             <div class="flex items-center gap-3 flex-shrink-0">
-                <span class="text-bank-red font-bold text-lg tracking-wider">v1.20</span>
+                <span class="text-bank-red font-bold text-lg tracking-wider">v1.21</span>
                 <div class="h-5 w-px bg-gray-300"></div>
                 
                 <!-- 주소록 관리 패널 -->
@@ -435,25 +435,34 @@
                 const hintSpan = td.querySelector('.initial-hint');
 
                 if (val && addressBookData.length > 0) {
-                    const valLower = val.toLowerCase();
+                    // v1.21 추가: 법인명 특수문자 및 공백 정규화 함수
+                    const normalizeText = (text) => {
+                        if (!text) return '';
+                        return text.replace(/㈜/g, '(주)')
+                                   .replace(/주식회사/g, '(주)')
+                                   .replace(/\s+/g, '')
+                                   .toLowerCase();
+                    };
+
+                    const valNorm = normalizeText(val);
                     
-                    // 1단계: 정확히 일치하는 이름 또는 이니셜 검색
+                    // 1단계: 정확히 일치하는 이름 또는 이니셜 검색 (정규화 적용)
                     let match = addressBookData.find(d => 
-                        d.name.toLowerCase() === valLower || 
-                        (d.initial && d.initial.toLowerCase() === valLower)
+                        normalizeText(d.name) === valNorm || 
+                        normalizeText(d.initial) === valNorm
                     );
                     
                     // 2단계: 끝에 숫자가 붙은 경우 분리하여 다중 계좌 지능형 매칭 (예: 김민준2)
                     if (!match) {
-                        const numMatch = valLower.match(/^(.*?)(\d+)$/);
+                        const numMatch = valNorm.match(/^(.*?)(\d+)$/);
                         if (numMatch) {
-                            const baseText = numMatch[1].trim(); 
+                            const baseText = numMatch[1]; 
                             const index = parseInt(numMatch[2], 10); 
                             
                             // 이름이나 이니셜이 baseText(예: 김민준, MJ)와 일치하는 후보군 찾기
                             const candidates = addressBookData.filter(d => 
-                                d.name.toLowerCase() === baseText || 
-                                (d.initial && d.initial.toLowerCase() === baseText)
+                                normalizeText(d.name) === baseText || 
+                                normalizeText(d.initial) === baseText
                             );
                             
                             // 해당 숫자(예: 2)번째 순번의 계좌가 존재하면 매칭
@@ -541,6 +550,15 @@
                         opt2.textContent = `${baseName} [${d.bank}]`;
                         datalist.appendChild(opt2);
                     }
+                }
+
+                // v1.21 추가: 브라우저 자동완성용 정규화 텍스트 추가 (㈜구글 -> (주)구글 등)
+                const normName = displayName.replace(/㈜/g, '(주)').replace(/주식회사/g, '(주)');
+                if (normName !== displayName) {
+                    const opt3 = document.createElement('option');
+                    opt3.value = normName;
+                    opt3.textContent = `[${d.bank}] ${d.account}`;
+                    datalist.appendChild(opt3);
                 }
             });
         }
@@ -728,9 +746,10 @@
 
             // 토글 상태 복원 및 초기화 실행
             const savedToggle = localStorage.getItem('suggestToggleV1_19');
-            if (savedToggle === 'true') {
-                const toggleEl = document.getElementById('toggle-suggest');
-                if(toggleEl) toggleEl.checked = true;
+            const toggleEl = document.getElementById('toggle-suggest');
+            if (toggleEl) {
+                // v1.21 변경점: 명시적으로 'false'로 저장하지 않은 이상 기본값 켜짐(true)
+                toggleEl.checked = (savedToggle !== 'false');
             }
             if (typeof toggleSuggest === 'function') toggleSuggest();
         }
