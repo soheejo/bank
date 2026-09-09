@@ -82,45 +82,45 @@
 
     <!-- 상단 고정 툴바 -->
     <div class="sticky-toolbar w-full flex justify-center py-3 px-4 shadow-sm no-print mb-6">
-        <div class="w-full max-w-[850px] flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <span class="text-bank-red font-bold text-lg tracking-wider">v1.19</span>
+        <div class="w-full max-w-[1050px] flex justify-between items-center gap-4">
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <span class="text-bank-red font-bold text-lg tracking-wider">v1.20</span>
                 <div class="h-5 w-px bg-gray-300"></div>
                 
                 <!-- 주소록 관리 패널 -->
                 <div class="flex items-center bg-gray-100 rounded-md border border-gray-200 px-2 py-1 gap-2">
-                    <span id="address-book-status" class="text-xs font-semibold text-gray-600 w-[80px] text-center">주소록 없음</span>
-                    <label class="cursor-pointer text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1 rounded text-xs font-medium transition-colors" title="주소록 엑셀 파일을 가져와 누적 추가합니다.">
+                    <span id="address-book-status" class="text-xs font-semibold text-gray-600 min-w-[80px] whitespace-nowrap text-center">주소록 없음</span>
+                    <label class="cursor-pointer whitespace-nowrap text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1 rounded text-xs font-medium transition-colors" title="주소록 엑셀 파일을 가져와 누적 추가합니다.">
                         📁 추가 로드
                         <input type="file" id="excel-upload-address" class="hidden" accept=".xlsx, .xls">
                     </label>
-                    <button onclick="clearAddressBook()" class="text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded text-xs font-medium transition-colors" title="주소록 연동 해제 및 비우기">
+                    <button onclick="clearAddressBook()" class="whitespace-nowrap text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded text-xs font-medium transition-colors" title="주소록 연동 해제 및 비우기">
                         ❌ 비우기
                     </button>
                 </div>
 
                 <!-- 연관 계좌 보기 토글 (v1.19 추가) -->
-                <label class="cursor-pointer flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-yellow-50 border border-yellow-200 hover:bg-yellow-100 px-2 py-1 rounded transition-colors" title="수취인명 입력 시 등록된 연관 계좌(김민준1, 2 등)를 드롭다운으로 보여줍니다.">
+                <label class="cursor-pointer whitespace-nowrap flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-yellow-50 border border-yellow-200 hover:bg-yellow-100 px-2 py-1 rounded transition-colors" title="수취인명 입력 시 등록된 연관 계좌(김민준1, 2 등)를 드롭다운으로 보여줍니다.">
                     <input type="checkbox" id="toggle-suggest" onchange="toggleSuggest()" class="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500">
                     🔍 연관 계좌 보기
                 </label>
             </div>
 
-            <div class="flex items-center gap-1.5 bg-gray-50 p-1 rounded-md border border-gray-200">
+            <div class="flex items-center gap-1.5 bg-gray-50 p-1 rounded-md border border-gray-200 flex-shrink-0">
                 <div class="flex items-center text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded overflow-hidden">
-                    <span class="px-2 py-1 text-gray-400 bg-gray-50 border-r border-gray-200">초기화</span>
-                    <button onclick="globalClearAll()" class="px-2 py-1 hover:bg-red-50 hover:text-red-600 transition-colors" title="모든 페이지 초기화">전체</button>
+                    <span class="px-2 py-1 text-gray-400 bg-gray-50 border-r border-gray-200 whitespace-nowrap">초기화</span>
+                    <button onclick="globalClearAll()" class="px-2 py-1 hover:bg-red-50 hover:text-red-600 transition-colors whitespace-nowrap" title="모든 페이지 초기화">전체</button>
                 </div>
                 <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <label class="cursor-pointer text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-2 py-1 rounded text-sm font-medium transition-colors flex items-center" title="기존 작성 내역 불러오기">
+                <label class="cursor-pointer whitespace-nowrap text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-2 py-1 rounded text-sm font-medium transition-colors flex items-center" title="기존 작성 내역 불러오기">
                     ⬆️ 불러오기
                     <input type="file" id="excel-upload-data" class="hidden" accept=".xlsx, .xls">
                 </label>
-                <button onclick="exportToExcel()" class="text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-2 py-1 rounded text-sm font-medium transition-colors" title="작성한 모든 페이지를 다중 시트 엑셀로 저장">
+                <button onclick="exportToExcel()" class="whitespace-nowrap text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-2 py-1 rounded text-sm font-medium transition-colors" title="작성한 모든 페이지를 다중 시트 엑셀로 저장">
                     ⬇️ 내보내기
                 </button>
                 <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button onclick="window.print()" class="bg-bank-red hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors shadow-sm ml-1">
+                <button onclick="window.print()" class="whitespace-nowrap bg-bank-red hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors shadow-sm ml-1">
                     🖨️ 인쇄
                 </button>
             </div>
@@ -137,7 +137,6 @@
         </button>
     </div>
 
-    <!-- 페이지 생성용 템플릿 -->
     <template id="page-template">
         <div class="print-container w-full max-w-[850px] bg-white shadow-xl rounded-sm p-8 md:p-12 relative border border-gray-200">
             <button type="button" class="delete-page-btn no-print absolute top-4 right-4 text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 px-2 py-1 rounded text-xs transition-colors" onclick="removePage(this)">
@@ -256,9 +255,6 @@
         <option value="SBI저축은행"></option>
     </datalist>
 
-    <!-- 연관 계좌 드롭다운용 (v1.19 추가) -->
-    <datalist id="address-book-list"></datalist>
-
     <script>
         let addressBookData = [];
         let copiedAgentData = null; 
@@ -268,20 +264,8 @@
         const formatNumber = num => num ? parseInt(num, 10).toLocaleString('ko-KR') : '';
         const unformatNumber = str => str.toString().replace(/[^\d]/g, '');
 
-        // --- 1. 다중 페이지 및 토글 관리 ---
-        window.toggleSuggest = function() {
-            const isChecked = document.getElementById('toggle-suggest').checked;
-            document.querySelectorAll('.recipient-input').forEach(input => {
-                if (isChecked) input.setAttribute('list', 'address-book-list');
-                else input.removeAttribute('list');
-            });
-            localStorage.setItem('suggestToggleV1_19', isChecked ? 'true' : 'false');
-        };
-
+        // --- 1. 다중 페이지 관리 시스템 ---
         function createTransactionRows(tbody) {
-            const isSuggestOn = document.getElementById('toggle-suggest') && document.getElementById('toggle-suggest').checked;
-            const listAttr = isSuggestOn ? `list="address-book-list"` : '';
-
             for (let i = 1; i <= 10; i++) {
                 const tr = document.createElement('tr');
                 if(i % 2 === 0) tr.classList.add('bg-gray-50'); 
@@ -294,7 +278,7 @@
                     <td class="border border-bank-red py-1 px-1"><input type="text" list="bank-list" class="bank-input" data-row="${i-1}" placeholder="은행명"></td>
                     <td class="border border-bank-red py-1 px-1"><input type="text" class="account-input" data-row="${i-1}" placeholder="'-' 포함"></td>
                     <td class="border border-bank-red py-1 px-1 relative">
-                        <input type="text" class="recipient-input w-full pr-8" data-row="${i-1}" placeholder="예금주 (이니셜)" ${listAttr}>
+                        <input type="text" class="recipient-input w-full pr-8" data-row="${i-1}" placeholder="예금주 (이니셜)">
                         <span class="initial-hint absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-400 font-medium no-print pointer-events-none"></span>
                     </td>
                     <td class="border border-bank-red py-1 px-1">
@@ -426,7 +410,7 @@
                 calculatePageTotal(page);
             }
             
-            // v1.19 스마트 매칭 알고리즘 
+            // v1.18 스마트 매칭 로직 복구 (에러 수정)
             if (e.target.classList.contains('recipient-input')) {
                 const val = e.target.value.trim();
                 const td = e.target.closest('td');
@@ -434,24 +418,37 @@
 
                 if (val && addressBookData.length > 0) {
                     const valLower = val.toLowerCase();
-                    const match = addressBookData.find(d => {
-                        const cName = d.name.toLowerCase();
-                        const init = (d.initial || '').toLowerCase();
-                        const suf = (d.suffix || '').toLowerCase();
-                        
-                        return cName === valLower || 
-                               init === valLower || 
-                               (cName + suf) === valLower || 
-                               (init + suf) === valLower;
-                    });
                     
+                    // 1단계: 정확히 일치하는 이름 또는 이니셜 검색
+                    let match = addressBookData.find(d => 
+                        d.name.toLowerCase() === valLower || 
+                        (d.initial && d.initial.toLowerCase() === valLower)
+                    );
+                    
+                    // 2단계: 끝에 숫자가 붙은 경우 분리하여 다중 계좌 지능형 매칭 (예: 김민준2)
+                    if (!match) {
+                        const numMatch = valLower.match(/^(.*?)(\d+)$/);
+                        if (numMatch) {
+                            const baseText = numMatch[1].trim(); 
+                            const index = parseInt(numMatch[2], 10); 
+                            
+                            // 이름이나 이니셜이 baseText(예: 김민준, MJ)와 일치하는 후보군 찾기
+                            const candidates = addressBookData.filter(d => 
+                                d.name.toLowerCase() === baseText || 
+                                (d.initial && d.initial.toLowerCase() === baseText)
+                            );
+                            
+                            // 해당 숫자(예: 2)번째 순번의 계좌가 존재하면 매칭
+                            if (candidates.length >= index) {
+                                match = candidates[index - 1]; 
+                            }
+                        }
+                    }
+
                     if (match) {
                         const tr = e.target.closest('tr');
-                        e.target.value = match.name; // 항상 꼬리표 없는 이름으로 적용
-                        
-                        let hintText = match.initial || '';
-                        if (!hintText && match.suffix) hintText = match.suffix; // 이니셜이 없으면 숫자라도 표시
-                        hintSpan.textContent = hintText;
+                        e.target.value = match.name; // 입력칸은 언제나 숫자 빠진 원본 이름으로
+                        hintSpan.textContent = match.initial || ''; // 힌트 띄우기
 
                         if(match.bank) tr.querySelector('.bank-input').value = match.bank;
                         if(match.account) tr.querySelector('.account-input').value = match.account;
@@ -496,27 +493,7 @@
             }
         });
 
-        // --- 4. 주소록 관리 및 Datalist 업데이트 ---
-        function updateAddressBookDatalist() {
-            let datalist = document.getElementById('address-book-list');
-            datalist.innerHTML = '';
-            
-            addressBookData.forEach(d => {
-                const nameKey = d.name + (d.suffix || '');
-                const opt1 = document.createElement('option');
-                opt1.value = nameKey;
-                opt1.textContent = `[${d.bank}] ${d.account}`;
-                datalist.appendChild(opt1);
-                
-                if (d.initial && d.initial.toLowerCase() !== nameKey.toLowerCase()) {
-                    const opt2 = document.createElement('option');
-                    opt2.value = d.initial;
-                    opt2.textContent = `${d.name} [${d.bank}]`;
-                    datalist.appendChild(opt2);
-                }
-            });
-        }
-
+        // --- 4. 주소록 관리 ---
         function updateAddressBookStatus() {
             const statusEl = document.getElementById('address-book-status');
             if (addressBookData.length > 0) {
@@ -526,7 +503,6 @@
                 statusEl.textContent = '주소록 없음';
                 statusEl.classList.replace('text-blue-600', 'text-gray-600');
             }
-            updateAddressBookDatalist();
         }
 
         document.getElementById('excel-upload-address').addEventListener('change', function(e) {
@@ -571,16 +547,13 @@
                             const bankVal = row[bankIdx] ? String(row[bankIdx]).trim() : '';
                             const accountVal = row[accountIdx] ? String(row[accountIdx]).trim() : '';
 
-                            // 꼬리표(suffix) 분리 로직
-                            let suffix = '';
-                            const nameNumMatch = nameVal.match(/\d+$/);
-                            if (nameNumMatch) suffix = nameNumMatch[0];
-                            
-                            const initNumMatch = initialVal.match(/\d+$/);
-                            if (initNumMatch && !suffix) suffix = initNumMatch[0];
+                            if(!initialVal) {
+                                const numMatch = nameVal.match(/\d+$/);
+                                if(numMatch) initialVal = nameVal; 
+                            }
 
-                            const cleanName = nameVal.replace(/\d+$/, '').trim();
-                            const entry = { name: cleanName, initial: initialVal, suffix: suffix, bank: bankVal, account: accountVal };
+                            const cleanName = nameVal.replace(/\d+$/, '');
+                            const entry = { name: cleanName, initial: initialVal, bank: bankVal, account: accountVal };
 
                             const isDuplicate = addressBookData.some(d => 
                                 d.name === entry.name && d.initial === entry.initial && 
@@ -595,11 +568,11 @@
                     });
                     
                     if (newEntriesCount > 0) {
-                        localStorage.setItem('addressBookDataV1_19', JSON.stringify(addressBookData));
+                        localStorage.setItem('addressBookDataV1_18', JSON.stringify(addressBookData));
                         updateAddressBookStatus();
                         alert(`${newEntriesCount}건의 주소록이 새로 추가되었습니다.\n(현재 총 ${addressBookData.length}건 적용중)`);
                     } else {
-                        alert('추가된 데이터가 없습니다. (이미 존재하거나 양식을 찾을 수 없음)');
+                        alert('추가된 데이터가 없습니다. (이미 존재하는 데이터이거나 양식을 찾을 수 없습니다)');
                     }
                 } catch (error) {
                     alert('주소록 엑셀 파일을 읽는 중 오류가 발생했습니다.');
@@ -615,7 +588,7 @@
             }
             if(confirm('주소록 연동을 해제하고 저장소에서 모두 지우시겠습니까?\n(수기로만 입력하게 됩니다)')) {
                 addressBookData = [];
-                localStorage.removeItem('addressBookDataV1_19');
+                localStorage.removeItem('addressBookDataV1_18');
                 updateAddressBookStatus();
             }
         };
@@ -676,40 +649,17 @@
 
         function saveAllData() {
             const pages = Array.from(document.querySelectorAll('.print-container')).map(getPageData);
-            localStorage.setItem('paymentFormDataV1_19', JSON.stringify(pages));
+            localStorage.setItem('paymentFormDataV1_18', JSON.stringify(pages));
         }
 
         function loadInitialData() {
-            // 토글 세팅
-            const savedToggle = localStorage.getItem('suggestToggleV1_19');
-            if (savedToggle === 'true') {
-                document.getElementById('toggle-suggest').checked = true;
-            }
-
-            // 하위 버전 호환 포함 주소록 로드
-            const savedAddressBook = localStorage.getItem('addressBookDataV1_19') || localStorage.getItem('addressBookDataV1_17') || localStorage.getItem('addressBookDataV1_16');
+            const savedAddressBook = localStorage.getItem('addressBookDataV1_18') || localStorage.getItem('addressBookDataV1_17') || localStorage.getItem('addressBookDataV1_16');
             if (savedAddressBook) {
                 addressBookData = JSON.parse(savedAddressBook);
-                
-                // 구버전 주소록 데이터에 suffix 속성이 없다면 생성해주는 안전 장치
-                addressBookData.forEach(d => {
-                    if (d.suffix === undefined) {
-                        let suf = '';
-                        const nMatch = d.name.match(/\d+$/);
-                        if (nMatch) suf = nMatch[0];
-                        else if (d.initial) {
-                            const iMatch = d.initial.match(/\d+$/);
-                            if (iMatch) suf = iMatch[0];
-                        }
-                        d.suffix = suf;
-                        d.name = d.name.replace(/\d+$/, '').trim();
-                    }
-                });
                 updateAddressBookStatus();
             }
 
-            // 양식 로드
-            let savedPagesStr = localStorage.getItem('paymentFormDataV1_19') || localStorage.getItem('paymentFormDataV1_17') || localStorage.getItem('paymentFormDataV1_16');
+            let savedPagesStr = localStorage.getItem('paymentFormDataV1_18') || localStorage.getItem('paymentFormDataV1_17') || localStorage.getItem('paymentFormDataV1_16');
             let pagesData = null;
             
             if (savedPagesStr) {
@@ -723,8 +673,6 @@
             } else {
                 addPage(); 
             }
-            
-            toggleSuggest(); // 드롭다운 속성 일괄 적용
         }
 
         // --- 6. 초기화 함수들 ---
@@ -858,7 +806,6 @@
                     if(pagesWrapper.children.length === 0) throw new Error("유효한 페이지가 없습니다.");
                     
                     saveAllData();
-                    toggleSuggest(); // 새로 생성된 페이지에도 드롭다운 속성 적용
                     alert(`총 ${pagesWrapper.children.length}장의 페이지를 불러왔습니다.`);
                 } catch (error) {
                     alert('파일을 읽을 수 없습니다. (지원되는 양식이 아닙니다.)');
