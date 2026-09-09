@@ -84,7 +84,7 @@
     <div class="sticky-toolbar w-full flex justify-center py-3 px-4 shadow-sm no-print mb-6">
         <div class="w-full max-w-[850px] flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <span class="text-bank-red font-bold text-lg tracking-wider">v1.17</span>
+                <span class="text-bank-red font-bold text-lg tracking-wider">v1.18</span>
                 <div class="h-5 w-px bg-gray-300"></div>
                 <!-- 주소록 관리 패널 -->
                 <div class="flex items-center bg-gray-100 rounded-md border border-gray-200 px-2 py-1 gap-2">
@@ -263,7 +263,6 @@
                 const tr = document.createElement('tr');
                 if(i % 2 === 0) tr.classList.add('bg-gray-50'); 
                 
-                // v1.17 변경점: 수취인명 td에 relative 속성 및 initial-hint span 추가
                 tr.innerHTML = `
                     <td class="border border-bank-red py-2 font-medium text-gray-600 relative group">
                         ${i}
@@ -404,7 +403,7 @@
                 calculatePageTotal(page);
             }
             
-            // v1.17 변경점: 이니셜 힌트 표시 로직 추가
+            // v1.18 스마트 매칭 로직 복구 (에러 수정)
             if (e.target.classList.contains('recipient-input')) {
                 const val = e.target.value.trim();
                 const td = e.target.closest('td');
@@ -412,22 +411,45 @@
 
                 if (val && addressBookData.length > 0) {
                     const valLower = val.toLowerCase();
-                    const match = addressBookData.find(d => 
-                        d.name === val || (d.initial && d.initial.toLowerCase() === valLower)
+                    
+                    // 1단계: 정확히 일치하는 이름 또는 이니셜 검색
+                    let match = addressBookData.find(d => 
+                        d.name.toLowerCase() === valLower || 
+                        (d.initial && d.initial.toLowerCase() === valLower)
                     );
                     
+                    // 2단계: 끝에 숫자가 붙은 경우 분리하여 다중 계좌 지능형 매칭 (예: 김민준2)
+                    if (!match) {
+                        const numMatch = valLower.match(/^(.*?)(\d+)$/);
+                        if (numMatch) {
+                            const baseText = numMatch[1].trim(); 
+                            const index = parseInt(numMatch[2], 10); 
+                            
+                            // 이름이나 이니셜이 baseText(예: 김민준, MJ)와 일치하는 후보군 찾기
+                            const candidates = addressBookData.filter(d => 
+                                d.name.toLowerCase() === baseText || 
+                                (d.initial && d.initial.toLowerCase() === baseText)
+                            );
+                            
+                            // 해당 숫자(예: 2)번째 순번의 계좌가 존재하면 매칭
+                            if (candidates.length >= index) {
+                                match = candidates[index - 1]; 
+                            }
+                        }
+                    }
+
                     if (match) {
                         const tr = e.target.closest('tr');
-                        e.target.value = match.name;
-                        hintSpan.textContent = match.initial || ''; // 이니셜이 있으면 화면에 표시
+                        e.target.value = match.name; // 입력칸은 언제나 숫자 빠진 원본 이름으로
+                        hintSpan.textContent = match.initial || ''; // 힌트 띄우기
 
                         if(match.bank) tr.querySelector('.bank-input').value = match.bank;
                         if(match.account) tr.querySelector('.account-input').value = match.account;
                     } else {
-                        hintSpan.textContent = ''; // 매칭 실패시 힌트 제거
+                        hintSpan.textContent = ''; 
                     }
                 } else {
-                    hintSpan.textContent = ''; // 비어있을시 힌트 제거
+                    hintSpan.textContent = ''; 
                 }
             }
 
@@ -458,13 +480,13 @@
                 tr.querySelector('.account-input').value = '';
                 tr.querySelector('.recipient-input').value = '';
                 tr.querySelector('.amount-input').value = '';
-                tr.querySelector('.initial-hint').textContent = ''; // 행 비울 때 힌트도 제거
+                tr.querySelector('.initial-hint').textContent = ''; 
                 calculatePageTotal(page);
                 saveAllData();
             }
         });
 
-        // --- 4. 주소록 관리 (스마트 헤더 파싱 & 누적 추가) ---
+        // --- 4. 주소록 관리 ---
         function updateAddressBookStatus() {
             const statusEl = document.getElementById('address-book-status');
             if (addressBookData.length > 0) {
@@ -539,7 +561,7 @@
                     });
                     
                     if (newEntriesCount > 0) {
-                        localStorage.setItem('addressBookDataV1_17', JSON.stringify(addressBookData));
+                        localStorage.setItem('addressBookDataV1_18', JSON.stringify(addressBookData));
                         updateAddressBookStatus();
                         alert(`${newEntriesCount}건의 주소록이 새로 추가되었습니다.\n(현재 총 ${addressBookData.length}건 적용중)`);
                     } else {
@@ -559,7 +581,7 @@
             }
             if(confirm('주소록 연동을 해제하고 저장소에서 모두 지우시겠습니까?\n(수기로만 입력하게 됩니다)')) {
                 addressBookData = [];
-                localStorage.removeItem('addressBookDataV1_17');
+                localStorage.removeItem('addressBookDataV1_18');
                 updateAddressBookStatus();
             }
         };
@@ -596,7 +618,6 @@
                     recipientInput.value = data.transactions[i].recipient || '';
                     pageElement.querySelector(`.amount-input[data-row="${i}"]`).value = data.transactions[i].amount || '';
 
-                    // v1.17 변경점: 로드 시 수취인명이 있으면 주소록을 뒤져 이니셜 복구
                     const hintSpan = recipientInput.closest('td').querySelector('.initial-hint');
                     if (recipientInput.value && addressBookData.length > 0) {
                         const match = addressBookData.find(d => d.name === recipientInput.value);
@@ -621,19 +642,17 @@
 
         function saveAllData() {
             const pages = Array.from(document.querySelectorAll('.print-container')).map(getPageData);
-            localStorage.setItem('paymentFormDataV1_17', JSON.stringify(pages));
+            localStorage.setItem('paymentFormDataV1_18', JSON.stringify(pages));
         }
 
         function loadInitialData() {
-            // 하위 버전 호환 포함 주소록 로드
-            const savedAddressBook = localStorage.getItem('addressBookDataV1_17') || localStorage.getItem('addressBookDataV1_16') || localStorage.getItem('addressBookDataV1_9');
+            const savedAddressBook = localStorage.getItem('addressBookDataV1_18') || localStorage.getItem('addressBookDataV1_17') || localStorage.getItem('addressBookDataV1_16');
             if (savedAddressBook) {
                 addressBookData = JSON.parse(savedAddressBook);
                 updateAddressBookStatus();
             }
 
-            // 양식 로드
-            let savedPagesStr = localStorage.getItem('paymentFormDataV1_17') || localStorage.getItem('paymentFormDataV1_16') || localStorage.getItem('paymentFormDataV1_9');
+            let savedPagesStr = localStorage.getItem('paymentFormDataV1_18') || localStorage.getItem('paymentFormDataV1_17') || localStorage.getItem('paymentFormDataV1_16');
             let pagesData = null;
             
             if (savedPagesStr) {
@@ -655,7 +674,7 @@
             if (section === 'payment') {
                 if(!confirm('이 페이지의 지급 내역만 지우시겠습니까?')) return;
                 page.querySelectorAll('.transaction-tbody input').forEach(el => el.value = '');
-                page.querySelectorAll('.initial-hint').forEach(el => el.textContent = ''); // 힌트 초기화
+                page.querySelectorAll('.initial-hint').forEach(el => el.textContent = ''); 
                 calculatePageTotal(page);
             } else if (section === 'agent') {
                 if(!confirm('이 페이지의 대리인 정보만 지우시겠습니까?')) return;
@@ -690,7 +709,7 @@
                         i + 1,
                         row.bank,
                         row.account,
-                        row.recipient, // 순수하게 수취인명만 저장됨 (힌트 span 무시됨)
+                        row.recipient, 
                         row.amount ? Number(unformatNumber(row.amount)) : null
                     ]);
                 }
