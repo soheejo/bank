@@ -81,10 +81,10 @@
 <body class="flex flex-col items-center min-h-screen">
 
     <!-- 상단 고정 툴바 -->
-    <div class="sticky-toolbar w-full flex justify-center py-3 px-4 shadow-sm no-print mb-6">
-        <div class="w-full max-w-[1050px] flex justify-between items-center gap-4">
+    <div class="sticky-toolbar w-full flex justify-center py-3 px-4 shadow-sm no-print mb-6 overflow-x-auto">
+        <div class="w-full max-w-[1200px] min-w-max flex justify-between items-center gap-6 px-2">
             <div class="flex items-center gap-3 flex-shrink-0">
-                <span class="text-bank-red font-bold text-lg tracking-wider">v1.22</span>
+                <span class="text-bank-red font-bold text-lg tracking-wider">v1.23</span>
                 <div class="h-5 w-px bg-gray-300"></div>
                 
                 <!-- 주소록 관리 패널 -->
@@ -106,9 +106,9 @@
                 </label>
             </div>
 
-            <!-- 총 합계 표시 영역 (v1.22 추가) -->
-            <div class="flex-1 flex justify-center min-w-[200px]">
-                <div class="flex items-center bg-red-50 border border-red-100 rounded-lg px-4 py-1.5 shadow-sm">
+            <!-- 총 합계 표시 영역 (v1.23 수정: 깨짐 방지 및 폭 확장) -->
+            <div class="flex-1 flex justify-center min-w-[200px] flex-shrink-0">
+                <div class="flex items-center bg-red-50 border border-red-100 rounded-full px-6 py-1.5 shadow-sm whitespace-nowrap transition-all">
                     <span class="text-sm font-bold text-gray-600 mr-3">총 합계</span>
                     <span class="text-lg font-extrabold text-bank-red tracking-tight">￦ <span id="grand-total-display">0</span></span>
                 </div>
