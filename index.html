@@ -84,7 +84,7 @@
     <div class="sticky-toolbar w-full flex justify-center py-3 px-4 shadow-sm no-print mb-6">
         <div class="w-full max-w-[1050px] flex justify-between items-center gap-4">
             <div class="flex items-center gap-3 flex-shrink-0">
-                <span class="text-bank-red font-bold text-lg tracking-wider">v1.21</span>
+                <span class="text-bank-red font-bold text-lg tracking-wider">v1.22</span>
                 <div class="h-5 w-px bg-gray-300"></div>
                 
                 <!-- 주소록 관리 패널 -->
@@ -104,6 +104,14 @@
                     <input type="checkbox" id="toggle-suggest" onchange="toggleSuggest()" class="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500">
                     🔍 연관 계좌 보기
                 </label>
+            </div>
+
+            <!-- 총 합계 표시 영역 (v1.22 추가) -->
+            <div class="flex-1 flex justify-center min-w-[200px]">
+                <div class="flex items-center bg-red-50 border border-red-100 rounded-lg px-4 py-1.5 shadow-sm">
+                    <span class="text-sm font-bold text-gray-600 mr-3">총 합계</span>
+                    <span class="text-lg font-extrabold text-bank-red tracking-tight">￦ <span id="grand-total-display">0</span></span>
+                </div>
             </div>
 
             <div class="flex items-center gap-1.5 bg-gray-50 p-1 rounded-md border border-gray-200 flex-shrink-0">
@@ -327,6 +335,7 @@
             }
             if (confirm('이 페이지를 삭제하시겠습니까?')) {
                 btnElement.closest('.print-container').remove();
+                updateGrandTotal();
                 saveAllData();
                 updateDeleteButtons();
             }
@@ -374,6 +383,19 @@
             saveAllData();
         };
 
+        // v1.22 추가: 전체 페이지 총 합계 계산 함수
+        function updateGrandTotal() {
+            let grandTotal = 0;
+            document.querySelectorAll('.total-amount').forEach(input => {
+                const val = unformatNumber(input.value);
+                if (val) grandTotal += parseInt(val, 10);
+            });
+            const displayEl = document.getElementById('grand-total-display');
+            if (displayEl) {
+                displayEl.textContent = grandTotal === 0 ? '0' : formatNumber(grandTotal);
+            }
+        }
+
         function calculatePageTotal(pageElement) {
             let total = 0;
             pageElement.querySelectorAll('.amount-input').forEach(input => {
@@ -381,6 +403,7 @@
                 if (val) total += parseInt(val, 10);
             });
             pageElement.querySelector('.total-amount').value = total === 0 ? '0' : formatNumber(total);
+            updateGrandTotal(); // 페이지 합계 갱신 시 총 합계도 같이 갱신
         }
 
         window.togglePageDate = function(btnElement) {
@@ -752,6 +775,8 @@
                 toggleEl.checked = (savedToggle !== 'false');
             }
             if (typeof toggleSuggest === 'function') toggleSuggest();
+            
+            updateGrandTotal();
         }
 
         // --- 6. 초기화 함수들 ---
@@ -773,6 +798,7 @@
             if(!confirm('작성한 "모든 페이지"의 내용을 지우고 1장으로 초기화하시겠습니까?\n(주소록 설정은 유지됩니다)')) return;
             pagesWrapper.innerHTML = '';
             addPage();
+            updateGrandTotal();
             saveAllData();
         };
 
@@ -885,10 +911,12 @@
                     if(pagesWrapper.children.length === 0) throw new Error("유효한 페이지가 없습니다.");
                     
                     saveAllData();
+                    updateGrandTotal();
                     alert(`총 ${pagesWrapper.children.length}장의 페이지를 불러왔습니다.`);
                 } catch (error) {
                     alert('파일을 읽을 수 없습니다. (지원되는 양식이 아닙니다.)');
                     if(pagesWrapper.children.length === 0) addPage();
+                    updateGrandTotal();
                 }
                 e.target.value = ''; 
             };
